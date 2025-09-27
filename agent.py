@@ -1,5 +1,6 @@
 # from dotenv import load_dotenv
-
+from pathlib import Path
+import sys
 from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
 from livekit.plugins import (
@@ -7,8 +8,8 @@ from livekit.plugins import (
     openai,
     noise_cancellation,
 )
+from livekit.agents import mcp as mcp_client
 from prompts import AGENT_INSTRUCTION, SESSION_INSTRUCTION
-from tools import get_weather, search_web
 
 # load_dotenv()
 
@@ -16,18 +17,31 @@ from tools import get_weather, search_web
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
-            instructions=AGENT_INSTRUCTION,
             # llm=google.beta.realtime.RealtimeModel(
             #     voice="Aoede",
             #     temperature=0.8,
             # ),
-            # tools=[get_weather, search_web],
             
+            instructions=AGENT_INSTRUCTION,
             llm=openai.realtime.RealtimeModel(
-                voice="cedar",  # 預設為 marin, 另提供以下選擇 alloy, ash, ballad, coral, echo, sage, shimmer, verse, cedar
+                voice="cedar", # 預設為 marin, 另提供以下選擇 alloy, ash, ballad, coral, echo, sage, shimmer, verse, cedar
                 temperature=0.8,
             ),
-            tools=[get_weather, search_web],
+        
+            # tools=[get_weather, search_web],
+            # ✅ 關鍵：連到本地或遠端 MCP Server；可並列多個
+            mcp_servers=[
+                # 1) 若使用 stdio 啟動（同機、以 subprocess 方式）：
+                # mcp_client.MCPServerStdio(
+                #     command=sys.executable,
+                #     args=[str(Path(__file__).with_name("mcp_server.py"))]
+                # ),
+                # 2) 若使用 HTTP/SSE 方式（請替換 URL 為你的部署位置）：
+                # mcp_client.MCPServerHTTP("http://localhost:8000"),
+                mcp_client.MCPServerHTTP("http://localhost:9000/sse",timeout=10),
+                # 3) 亦可使用 Streamable HTTP（視伺服器型態而定）
+                # mcp_client.MCPServerStreamableHTTP("http://localhost:8000"),
+            ],
         )
 
 
@@ -38,9 +52,6 @@ async def entrypoint(ctx: agents.JobContext):
         room=ctx.room,
         agent=Assistant(),
         room_input_options=RoomInputOptions(
-            # LiveKit Cloud enhanced noise cancellation
-            # - If self-hosting, omit this parameter
-            # - For telephony applications, use `BVCTelephony` for best results
             video_enabled=True,
             noise_cancellation=noise_cancellation.BVC(),
         ),
@@ -55,24 +66,3 @@ async def entrypoint(ctx: agents.JobContext):
 
 if __name__ == "__main__":
     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
-
-
-
-# from livekit.agents import mcp
-# # Then pass the MCP server URL to the AgentSession or Agent constructor. The tools will be automatically loaded like any other tool.
-# session = AgentSession(
-#     #... other arguments ...
-#     mcp_servers=[
-#         mcp.MCPServerHTTP(
-#             "https://your-mcp-server.com"
-#         )       
-#     ]       
-# )
-# agent = Agent(
-#     #... other arguments ...
-#     mcp_servers=[
-#         mcp.MCPServerHTTP(
-#             "https://your-mcp-server.com"
-#         )       
-#     ]       
-# )

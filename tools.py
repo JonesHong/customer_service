@@ -5,12 +5,11 @@ LiveKit 工具模組 - 使用 LiveKit 框架提供工具服務
 
 import logging
 from livekit.agents import function_tool, RunContext
-from core_services import (
+
+# 引入服務模組
+from services import (
     fetch_weather,
-    search_web_ddg,
-    search_documents,
-    expand_query_with_synonyms,
-    QDRANT_CONFIG
+    search_web_ddg
 )
 
 # 設定日誌
@@ -42,37 +41,3 @@ async def search_web(
     """
     # 直接調用核心服務模組的無狀態函數
     return search_web_ddg(query, max_results=5)
-
-@function_tool()
-async def search_docs(
-    context: RunContext,  # type: ignore
-    query: str,
-    limit: int = 5
-) -> str:
-    """
-    Search documents from Qdrant vector database.
-    """
-    # 可選：使用同義詞擴展查詢
-    expanded_query = expand_query_with_synonyms(query)
-
-    # 調用核心服務模組的文件搜尋函數
-    return search_documents(
-        expanded_query,
-        qdrant_url=QDRANT_CONFIG["url"],
-        collection_name=QDRANT_CONFIG["collection"],
-        limit=limit
-    )
-
-@function_tool()
-async def get_weather_batch(
-    context: RunContext,  # type: ignore
-    cities: list
-) -> dict:
-    """
-    Get weather for multiple cities at once.
-    批次取得多個城市的天氣資訊
-    """
-    results = {}
-    for city in cities:
-        results[city] = fetch_weather(city, timeout=2.0)
-    return results    
