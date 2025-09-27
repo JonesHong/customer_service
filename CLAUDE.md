@@ -4,98 +4,117 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Chiayi customer service chatbot system using LiveKit agents with MCP (Model Context Protocol) integration. The system implements a voice-enabled AI assistant called "Friday" that can answer questions about Chiayi tourism and provide weather information.
+Chiayi customer service chatbot system using LiveKit real-time voice agents with MCP (Model Context Protocol) integration. The system implements a voice assistant called "Friday" that answers questions about Chiayi tourism and provides weather information.
 
 ## Core Architecture
 
-### Service Components
+### Modular Structure
 
-1. **LiveKit Agent System** (`agent_tool.py`, `agent_mcp.py`)
-   - Real-time voice agent using LiveKit's infrastructure
-   - Supports both OpenAI and Google real-time models
-   - Implements noise cancellation and video capabilities
+The codebase follows a modular architecture with clear separation of concerns:
 
-2. **MCP Server** (`mcp_server.py`)
-   - FastMCP-based server running on port 9000 (SSE transport)
-   - Integrates with Qdrant vector database for document search
-   - Provides weather and web search capabilities
+```
+services/        # Business logic services (weather, web search)
+utils/           # HTTP utilities and shared tools
+config/          # System configuration and synonym mappings (if exists)
+mcp_server.py    # FastMCP server exposing services as MCP tools
+agent.py         # LiveKit voice agent connecting to MCP server
+tools.py         # Direct LiveKit tool implementations (alternative to MCP)
+prompts.py       # Agent personality and instructions
+```
 
-3. **Qdrant Vector Database**
-   - Hybrid search with dense and sparse vectors
-   - Collection: `docs_hybrid`
-   - Models: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (dense), `Qdrant/bm25` (sparse)
-   - Running on `http://localhost:6333`
+### Service Integration Flow
 
-### Key Integration Points
+1. **MCP Server** (`mcp_server.py`) runs on `http://localhost:9000/sse`
+   - Wraps services from `services/` module with `@mcp.tool` decorators
+   - Exposes tools via FastMCP framework using SSE transport
 
-- **MCP Client-Server Communication**: Agent connects to MCP server via HTTP/SSE at `http://localhost:9000/sse`
-- **Tool Registration**: Tools are exposed via FastMCP decorators and automatically discovered by LiveKit agents
-- **Prompts**: Character personality and instructions defined in `prompts.py`
+2. **LiveKit Agent** (`agent.py`)
+   - Connects to MCP server via `MCPServerHTTP` client
+   - Uses OpenAI or Google real-time models for voice interaction
+   - Can alternatively use direct tools from `tools.py`
+
+3. **Service Modules** (`services/`)
+   - Stateless pure functions for business logic
+   - `weather.py`: Weather fetching via wttr.in API
+   - `web_search.py`: DuckDuckGo search integration
 
 ## Development Commands
 
-### Starting Services
+### Running the System
 
 ```bash
-# Start MCP server (required for agent_mcp.py)
+# Start MCP server first (required for agent.py)
 python mcp_server.py
 
-# Run LiveKit agent with direct tools
-python agent_tool.py dev
+# In another terminal, run the LiveKit agent
+python agent.py dev
 
-# Run LiveKit agent with MCP integration
-python agent_mcp.py dev
+# Alternative: Run with direct tools (no MCP server needed)
+python tools.py dev
 ```
 
-### Dependencies
+### Environment Setup
 
 ```bash
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
 
-# Activate environment
-# Windows: venv\Scripts\activate
-# Linux/Mac: source venv/bin/activate
-
-# Install requirements
+# Install dependencies
 pip install -r requirements.txt
+```
+
+### Testing Services
+
+```bash
+# Test individual service modules
+python -c "from services import fetch_weather; print(fetch_weather('Taipei'))"
+
+# Test MCP server endpoints
+curl http://localhost:9000/sse
 ```
 
 ## Environment Configuration
 
-Required `.env` variables:
+Required `.env` file:
 - `LIVEKIT_URL`: LiveKit server WebSocket URL
 - `LIVEKIT_API_KEY`: LiveKit API key
 - `LIVEKIT_API_SECRET`: LiveKit API secret
-- `GOOGLE_API_KEY`: Google API key (for Google real-time model)
+- `GOOGLE_API_KEY`: For Google real-time voice model (optional)
 
 ## Code Patterns
 
-### Adding New Tools
+### Adding New MCP Tools
 
-Tools follow LiveKit's function tool pattern:
-```python
-@function_tool()
-async def tool_name(context: RunContext, param: str) -> str:
-    # Implementation
-```
-
-For MCP server tools:
+In `mcp_server.py`:
 ```python
 @mcp.tool
 def tool_name(param: str) -> str:
-    # Implementation
+    return service_function(param)
 ```
 
-### Agent Configuration
+### Adding New Services
 
-Agents can use either direct tool integration or MCP servers:
-- Direct: Pass tools list to Agent constructor
-- MCP: Pass mcp_servers list with MCPServerHTTP instances
+1. Create function in `services/` module
+2. Import in `services/__init__.py`
+3. Wrap with decorator in `mcp_server.py` or `tools.py`
+
+### LiveKit Direct Tools
+
+In `tools.py`:
+```python
+@function_tool()
+async def tool_name(context: RunContext, param: str) -> str:
+    return service_function(param)
+```
 
 ## Key Technical Details
 
-- **Synonym Mapping**: The system includes Chinese-English synonym mappings for better search results (see `SYN_MAP` in `mcp_server.py`)
-- **Retry Logic**: HTTP requests include retry strategies with exponential backoff
-- **Error Handling**: All tools include try-except blocks with fallback messages
-- **Logging**: Configured at INFO level with specific logger instances for different components
+- **Retry Logic**: HTTP requests use exponential backoff via `utils.http_client`
+- **Synonym Mapping**: Chinese-English mappings for better search (if config exists)
+- **Transport Options**: MCP supports stdio, SSE, or HTTP transport modes
+- **Voice Models**: Supports both OpenAI and Google real-time models
+- **Service Isolation**: Business logic separated from framework decorators

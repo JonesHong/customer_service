@@ -11,6 +11,15 @@ from fastmcp import FastMCP
 from services import (
     fetch_weather,
     search_web_ddg,
+    # QA functions
+    first_visit,
+    alishan_ticket,
+    train_station_location,
+    local_food,
+    thank_you,
+    opening_greeting,
+    general_help,
+    goodbye,
 )
 
 # 設定日誌
@@ -40,6 +49,64 @@ def search_web(query: str) -> str:
     2) 若無結果/出錯，退到 DuckDuckGoSearchRun
     """
     return search_web_ddg(query)
+
+# === 嘉義旅遊 QA 工具 ===
+
+@mcp.tool
+def qa_first_visit() -> str:
+    """
+    回答：這是我第一次來嘉義，可以告訴我有什麼特別值得看的嗎？
+    """
+    return first_visit()
+
+@mcp.tool
+def qa_alishan_ticket() -> str:
+    """
+    回答：阿里山森林鐵路聽起來好棒！我要怎麼買票呢？
+    """
+    return alishan_ticket()
+
+@mcp.tool
+def qa_train_station_location() -> str:
+    """
+    回答：搭去阿里山的火車站就在附近嗎？
+    """
+    return train_station_location()
+
+@mcp.tool
+def qa_local_food() -> str:
+    """
+    回答：我在哪裡可以嘗到在地的美食呢？
+    """
+    return local_food()
+
+@mcp.tool
+def qa_thank_you() -> str:
+    """
+    回答：謝謝你！
+    """
+    return thank_you()
+
+@mcp.tool
+def qa_opening_greeting() -> str:
+    """
+    開場問候語
+    """
+    return opening_greeting()
+
+@mcp.tool
+def qa_general_help() -> str:
+    """
+    提供一般協助選項
+    """
+    return general_help()
+
+@mcp.tool
+def qa_goodbye() -> str:
+    """
+    道別語
+    """
+    return goodbye()
 
 
 
