@@ -17,11 +17,17 @@ from prompts import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
+            # llm=google.beta.realtime.RealtimeModel(
+            #     voice="Aoede",
+            #     temperature=0.8,
+            # ),
+            
             instructions=AGENT_INSTRUCTION,
             llm=openai.realtime.RealtimeModel(
-                voice="cedar",
+                voice="cedar", # 預設為 marin, 另提供以下選擇 alloy, ash, ballad, coral, echo, sage, shimmer, verse, cedar
                 temperature=0.8,
             ),
+            # tools=[get_weather, search_web],
             # ✅ 關鍵：連到本地或遠端 MCP Server；可並列多個
             mcp_servers=[
                 # 1) 若使用 stdio 啟動（同機、以 subprocess 方式）：
