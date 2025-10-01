@@ -33,10 +33,6 @@ SYN_MAP = {
 }
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s %(name)s - %(message)s",
-)
 logging.getLogger("ddgs.ddgs").setLevel(logging.ERROR)  # 降噪 DuckDuckGoSearch 的子引擎錯誤
 weather_logger = logging.getLogger("mcp.weather")
 search_logger = logging.getLogger("mcp.search")

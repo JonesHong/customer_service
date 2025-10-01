@@ -7,7 +7,6 @@ from utils.http_client import create_http_session
 
 # 設定日誌
 weather_logger = logging.getLogger("core.weather")
-search_logger = logging.getLogger("core.search")
 
 
 
