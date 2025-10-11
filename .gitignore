@@ -79,3 +79,7 @@ logs/
 
 # 但保留測試/示範資料庫
 # !chiayi_qa.db
+
+node_modules/
+dist/
+.next/

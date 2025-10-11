@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>漫畫對話框</title>
+<style>
+  /* 自訂變數：改這裡就能換色與尺寸 */
+  :root{
+    --bubble-width: 460px;     /* 外觀寬度 */
+    --bubble-bg: #ffffff;      /* 泡泡底色（圖片看起來是白色） */
+    --stroke-inner: #111111;   /* 內描邊（黑） */
+    --stroke-outer: #ffffff;   /* 外描邊（白，做貼紙感） */
+    --stroke-inner-w: 6;       /* 內描邊粗細 (px) */
+    --stroke-outer-w: 16;      /* 外描邊粗細 (px) */
+    --text-color: #111;
+    --padding: 20px 24px;      /* 內距（給文字用） */
+  }
+
+  .speech {
+    width: min(100%, var(--bubble-width));
+    position: relative;
+    display: inline-block;
+  }
+
+  .speech svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 文字容器：鋪在 SVG 上層；為了簡單不做嚴格裁切 */
+  .speech__content {
+    position: absolute;
+    inset: 0;
+    padding: var(--padding);
+    color: var(--text-color);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto,
+          "Noto Sans TC", Arial, "Microsoft JhengHei", sans-serif;
+    /* 讓文字避開左下角尾巴一點空間 */
+    padding-left: calc(24px + 1.5rem);
+    padding-bottom: calc(20px + 0.4rem);
+  }
+
+  /* 如果你想要淡淡的陰影可開啟這行 */
+  /* .speech { filter: drop-shadow(0 2px 6px rgba(0,0,0,.12)); } */
+
+  @media (prefers-reduced-motion: reduce){
+    /* 未加動畫，這裡先預留：若未來加上過場，可在此關掉 */
+  }
+</style>
+</head>
+<body>
+
+<div class="speech" role="img" aria-label="漫畫對話框樣式">
+  <svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- 泡泡路徑：圓角長方形 + 左下圓滑尾巴 -->
+      <!-- 你也可以調整數值來改圓角或尾巴形狀 -->
+      <path id="bubble-path"
+        d="M60,20
+           H420 a24,24 0 0 1 24,24
+           V180 a24,24 0 0 1 -24,24
+           H165
+           l-60,44
+           l15,-44
+           H60  a24,24 0 0 1 -24,-24
+           V44  a24,24 0 0 1 24,-24
+           Z" />
+    </defs>
+
+    <!-- 填色（底色） -->
+    <use href="#bubble-path" fill="var(--bubble-bg)"/>
+
+    <!-- 外描邊（白色，製造貼紙外框感） -->
+    <use href="#bubble-path"
+         fill="none"
+         stroke="var(--stroke-outer)"
+         stroke-width="var(--stroke-outer-w)"
+         stroke-linejoin="round"
+         stroke-linecap="round"/>
+
+    <!-- 內描邊（黑色） -->
+    <use href="#bubble-path"
+         fill="none"
+         stroke="var(--stroke-inner)"
+         stroke-width="var(--stroke-inner-w)"
+         stroke-linejoin="round"
+         stroke-linecap="round"/>
+  </svg>
+
+  <div class="speech__content">
+    <strong>這裡放你的文字</strong><br>
+    樣式就像你給的參考圖：白底、黑描邊、左下角有小尾巴。
+  </div>
+</div>
+
+</body>
+</html>
