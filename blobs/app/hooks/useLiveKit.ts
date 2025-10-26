@@ -74,7 +74,7 @@ export function useLiveKit() {
       // 監聽連接事件
       room.on(RoomEvent.Connected, () => {
         console.log('✅ Connected to LiveKit room');
-        console.log('   Room SID:', room.sid);
+        console.log('   Room Name:', room.name);
         console.log('   Local participant:', room.localParticipant.identity);
         console.log('   Remote participants count:', room.remoteParticipants.size);
         setIsConnected(true);
@@ -94,7 +94,7 @@ export function useLiveKit() {
       room.on(RoomEvent.ConnectionStateChanged, (state) => {
         console.log('📡 Connection state changed:', state);
         console.log('   Room state:', room.state);
-        console.log('   Is connected:', room.isConnected);
+        console.log('   Is connected:', room.state === 'connected');
       });
 
       // 記錄連接品質
@@ -218,17 +218,24 @@ export function useLiveKit() {
         }
       });
 
-      // ✅ 監聽 LiveKit 原生 Transcription 事件（Agent TTS 即時字幕）
+      // ✅ 監聽 LiveKit 原生 Transcription 事件（僅處理 Agent TTS 即時字幕）
       room.on(RoomEvent.TranscriptionReceived, (segments, participant, publication) => {
         console.log('📝 Transcription received from:', participant?.identity);
         console.log('   Segments:', segments);
 
+        // 判斷是 agent 還是 user
+        const isAgent = participant && isAgentParticipant(participant);
+
+        // ✅ 只處理 Agent 的轉錄，User 的轉錄由 DataChannel 處理（避免重複）
+        if (!isAgent) {
+          console.log('   ⏩ Skipping user transcription (handled by DataChannel)');
+          return;
+        }
+
         segments.forEach(segment => {
           console.log(`   [${segment.final ? 'Final' : 'Interim'}] ${segment.text}`);
 
-          // 判斷是 agent 還是 user（agent 通常有 metadata.role === "agent"）
-          const isAgent = participant && isAgentParticipant(participant);
-          const role = isAgent ? 'assistant' : 'user';
+          const role = 'assistant';
 
           if (segment.final) {
             // 最終版本：檢查是否需要取代最後一則 interim 訊息
@@ -287,7 +294,8 @@ export function useLiveKit() {
               setTranscriptions(prev => [...prev, {
                 role: 'user',
                 text: message.text,
-                timestamp: new Date()
+                timestamp: new Date(),
+                isFinal: true
               }]);
             }
           }
@@ -307,7 +315,7 @@ export function useLiveKit() {
 
       console.log('📊 Initial room state after connect:');
       console.log('   Room name:', room.name);
-      console.log('   Room SID:', room.sid);
+      console.log('   Room Name:', room.name);
       console.log('   Local participant:', room.localParticipant?.identity);
       console.log('   Remote participants:', Array.from(room.remoteParticipants.keys()));
 
@@ -358,15 +366,12 @@ export function useLiveKit() {
       setTimeout(() => clearInterval(intervalId), 10000); // 10秒後停止
 
       console.log('🎵 Creating LocalAudioTrack...');
-      const audioTrack = new LocalAudioTrack(mediaStreamTrack, {
-        name: 'microphone',
-      });
+      const audioTrack = new LocalAudioTrack(mediaStreamTrack);
 
       console.log('📤 Publishing track to LiveKit...');
       await roomRef.current.localParticipant.publishTrack(audioTrack, {
         name: 'microphone',
         source: Track.Source.Microphone,  // ✅ 明確指定音訊來源
-        audioPriority: 'high',
       });
 
       localAudioTrackRef.current = audioTrack;
@@ -376,7 +381,6 @@ export function useLiveKit() {
       console.log('✅ Microphone published to LiveKit successfully');
 
       // 監控音訊軌道狀態
-      console.log('   Track enabled:', audioTrack.isEnabled);
       console.log('   Track muted:', audioTrack.isMuted);
       console.log('   Track SID:', audioTrack.sid);
 
@@ -384,7 +388,6 @@ export function useLiveKit() {
       setInterval(() => {
         if (audioTrack && roomRef.current) {
           console.log('📊 LocalAudioTrack stats:');
-          console.log('   Enabled:', audioTrack.isEnabled);
           console.log('   Muted:', audioTrack.isMuted);
           console.log('   MediaStreamTrack readyState:', audioTrack.mediaStreamTrack.readyState);
         }
