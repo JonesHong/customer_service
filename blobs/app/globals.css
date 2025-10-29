@@ -142,15 +142,18 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-xl);
-  padding: 14px;
-  backdrop-filter: var(--blur-strong);
-  -webkit-backdrop-filter: var(--blur-strong);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  gap: 20px;
+  border-radius: 24px;
+  padding: 28px 26px 36px;
+  background: rgba(255, 255, 255, 0.05);
   box-shadow:
-    inset 0 1px var(--glass-inset),
-    var(--glass-shadow);
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
 }
 
 /* 次玻璃（header 條） */
@@ -167,7 +170,7 @@ body {
   }
 }
 
-/* ===== 控制鈕列（統一金色樣式） ===== */
+/* ===== 控制鈕列（玻璃態設計） ===== */
 .controls {
   position: absolute;
   bottom: 40px; left: 50%;
@@ -176,23 +179,55 @@ body {
 }
 
 .controls button {
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.5);
-  background: linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,255,255,0.35));
-  box-shadow: inset 0 1px rgba(255,255,255,0.6);
-  padding: 8px 12px;
+  /* 玻璃態核心樣式 */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 69px;
+  border: none;
+
+  /* 多層陰影效果 */
+  box-shadow:
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+
+  padding: 8px 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  cursor: pointer;
   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
-.controls button:hover { transform: translateY(-1px); filter: brightness(1.04); }
+
+.controls button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+  box-shadow:
+    0px 6px 8px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.25),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.25);
+}
 
 .controls button.active {
-  background: linear-gradient(180deg, var(--gold-50), rgba(255,255,255,0.28));
-  border-color: var(--gold-300);
-  box-shadow: 0 0 24px rgba(233, 190, 96, 0.35);
-  color: var(--txt-strong);
+  background: rgba(233, 190, 96, 0.15);
+  box-shadow:
+    0 0 24px rgba(233, 190, 96, 0.4),
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(233, 190, 96, 0.3),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.3),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 1);
 }
+
 @media (prefers-color-scheme: dark) {
-  .controls button { border: 1px solid var(--glass-border); box-shadow: inset 0 1px var(--glass-inset); color: #E5E7EB; }
+  .controls button {
+    color: rgba(255, 255, 255, 0.85);
+  }
 }
 
 /* 狀態膠囊 */
@@ -211,12 +246,17 @@ body {
 }
 
 /* ===== 左側貼紙泡泡（選擇性：金色透明化） ===== */
-.message-bubble svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 22px rgba(0,0,0,0.22)); }
+.message-bubble svg {
+  display: none; /* 暫時隱藏 SVG，讓內容決定高度 */
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 8px 22px rgba(0,0,0,0.22));
+}
 
 /* SVG viewBox 與裁切框座標（對齊 SplineViewer.tsx 的 rect） */
 .message-bubble {
   --vb-w: 520;    /* viewBox 寬度 */
-  --vb-h: 200;    /* viewBox 高度 */
+  --vb-h: 280;    /* viewBox 高度 */
   --box-x: 44;    /* rect x 座標 */
   --box-y: 46;    /* rect y 座標 */
   --box-w: 408;   /* rect 寬度 */
@@ -225,11 +265,13 @@ body {
 
 /* 容器撐滿 SVG，並套用 clip-path */
 .message-bubble__content {
-  position: absolute;
-  inset: 0;
+  position: relative;
   box-sizing: border-box;
-  padding: 0;  /* 不再用 padding 佈局 */
+  padding: 0;
   pointer-events: none;  /* 讓點擊事件穿透到內層 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ✅ 使用 CSS clip-path 遮罩文字區域 */
@@ -240,26 +282,101 @@ body {
 
 /* 真正可滾動的文字區，使用固定像素值對齊 SVG */
 .message-bubble__scrollable {
-  position: absolute;
-  /* 根據你的測試：333px × 95px，位置 translateX(46px) translateY(52px) */
-  left: 46px;
-  top: 52px;
-  width: 333px;
-  height: 95px;
+  position: relative;
+  width: 396px; /* 440px - padding 左右各 22px */
+  max-height: 280px; /* 足夠顯示初始內容（標題+分隔+三個按鈕），純文字超過四行時滾動 */
+  padding: 12px 22px 20px;
+  margin: 20px 12px;
 
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  pointer-events: auto;  /* 恢復點擊事件 */
+  pointer-events: auto;
 
   /* 文字設定 */
-  color: #2c1810;
-  font: 17px/1.6 "SF Pro Text", system-ui, -apple-system, "Noto Sans TC", Arial, "Microsoft JhengHei", sans-serif;
-  font-weight: 500;
+  font-family: 'Noto Looped Thai', system-ui, -apple-system, "Noto Sans TC", Arial, "Microsoft JhengHei", sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 19px;
+  text-align: center;
+  color: #FFFFFF;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-word;
   box-sizing: border-box;
+}
+
+.message-bubble__default {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.message-bubble__headline {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: .3px;
+  line-height: 1.35;
+  margin: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.message-bubble__divider {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 4px;
+  line-height: 1;
+  margin: 0;
+}
+
+.message-bubble__buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-bubble__button {
+  width: 100%;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.35);
+  color: #FFFFFF;
+  font-weight: 500;
+  letter-spacing: .2px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.message-bubble__button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.28);
+}
+
+.message-bubble__button:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.message-bubble__button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 .message-bubble__scrollable::-webkit-scrollbar {
@@ -291,15 +408,56 @@ body {
   color: #2c1810;
 }
 
-.message-bubble { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); width: min(90%, 460px); z-index: 99; animation: bubbleIn .4s cubic-bezier(0.34,1.56,0.64,1); }
+.message-bubble {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  width: min(90%, 460px);
+  z-index: 99;
+  animation: bubbleIn .4s cubic-bezier(0.34,1.56,0.64,1);
+
+  /* 自適應高度 */
+  display: flex;
+  flex-direction: column;
+  min-height: fit-content;
+
+  /* Glassmorphism styling */
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25),
+              inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+              inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+              inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+              inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 7px;
+}
 @keyframes bubbleIn { 0%{opacity:0; transform: translateX(-50%) scale(.8) translateY(20px);} 100%{opacity:1; transform: translateX(-50%) scale(1) translateY(0);} }
 
 /* ===== 右側聊天 ===== */
-.chat-header h2 { margin: 0; font-weight: 600; font-size: 13px; color: var(--txt-strong); letter-spacing: .2px; }
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: .3px;
+}
 
 .chat-messages {
-  margin-top: 10px; padding: 8px; overflow-y: auto; flex: 1;
-  display: flex; flex-direction: column; gap: 10px;
+  flex: 1;
+  padding: 0 2px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent;
 }
 .chat-messages::-webkit-scrollbar { width: 8px; }
@@ -307,18 +465,36 @@ body {
 
 /* 訊息泡泡（統一金色材質） */
 .message-bubble-glass {
-  max-width: min(78%, 560px);
-  padding: 10px 12px 24px; /* 增加底部 padding 為時間戳預留空間 */
-  border-radius: var(--radius-lg);
+  max-width: min(88%, 560px);
+  padding: 14px 18px 30px;
+  border-radius: 18px;
   position: relative;
-  line-height: 1.45;
-  font-size: 14px;
+  line-height: 1.55;
+  font-size: 16px;
   letter-spacing: .2px;
-  backdrop-filter: var(--blur-mid);
-  -webkit-backdrop-filter: var(--blur-mid);
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
-.message-bubble-glass:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(16,24,40,.10); }
+.message-bubble-glass:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0px 6px 10px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0px 0px 16px rgba(255, 255, 255, 0.24),
+    inset 0px 18px 32px rgba(255, 255, 255, 0.26);
+}
 
 .chat-message { display: flex; align-items: flex-end; }
 .chat-message.user-message { justify-content: flex-end; }
@@ -326,29 +502,19 @@ body {
 
 /* AI 泡泡：較透，暖金高光 */
 .message-bubble-glass.is-ai {
-  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.34));
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px var(--glass-inset);
-  color: var(--txt-strong);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 /* User 泡泡：金色薄霧 */
 .message-bubble-glass.is-user {
-  background: linear-gradient(180deg, rgba(228, 188, 97, 0.22), rgba(228,188,97,0.14));
-  border: 1px solid rgba(233, 190, 96, 0.45);
-  box-shadow: inset 0 1px rgba(255,255,255,0.45);
-  color: var(--txt-strong);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 @media (prefers-color-scheme: dark) {
   .message-bubble-glass.is-ai {
-    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
-    border: 1px solid var(--glass-border);
-    color: var(--txt-strong);
+    border-color: rgba(255, 255, 255, 0.3);
   }
   .message-bubble-glass.is-user {
-    background: linear-gradient(180deg, rgba(215,165,70,0.22), rgba(215,165,70,0.12));
-    border: 1px solid rgba(233,190,96,0.28);
-    color: var(--txt-strong);
+    border-color: rgba(255, 255, 255, 0.22);
   }
 }
 
@@ -363,7 +529,7 @@ body {
   bottom: 6px;
   right: 10px;
   font-size: 11px;
-  opacity: .6;
+  color: rgba(255, 255, 255, 0.55);
   pointer-events: none; /* 防止遮擋選取文字 */
   white-space: nowrap; /* 時間戳不換行 */
 }
@@ -383,7 +549,7 @@ body {
 
 .chat-input {
   width: 100%; height: 42px; border: 0; outline: none; border-radius: var(--radius-pill);
-  padding: 0 14px; font-size: 14px;
+  padding: 0 14px; font-size: 16px;
   background: rgba(255,255,255,0.75);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
 }
@@ -394,43 +560,100 @@ body {
 }
 
 .send-button {
-  height: 42px; padding: 0 16px; border: 0; border-radius: 12px; font-weight: 700; letter-spacing: .2px; cursor: pointer;
-  background: linear-gradient(180deg, var(--btn-grad-start), var(--btn-grad-end));
-  color: var(--btn-txt);
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: .2px;
+
+  /* 玻璃態核心樣式 */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 69px;
+
+  /* 多層陰影效果 */
   box-shadow:
-    0 10px 22px rgba(217, 174, 82, .35),
-    inset 0 1px rgba(255,255,255,.7);
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+
+  color: rgba(255, 255, 255, 0.9);
   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
-.send-button:hover { filter: brightness(1.04); transform: translateY(-1px); }
-.send-button:active { transform: translateY(0); filter: brightness(.98); }
 
-/* 聊天開關/麥克風（與主題一致） */
+.send-button:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow:
+    0px 6px 8px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.25),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.25);
+}
+
+.send-button:active {
+  transform: translateY(0);
+  filter: brightness(1.0);
+}
+
+/* 聊天開關/麥克風（玻璃態設計） */
 .chat-toggle-button,
 .mic-button {
   position: absolute;
-  padding: 12px 20px;
-  font-size: 14px; font-weight: 700;
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.28));
-  color: var(--txt-strong);
+  padding: 6px 16px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all .2s ease;
-  backdrop-filter: var(--blur-mid);
   z-index: 100;
+
+  /* 玻璃態核心樣式 */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 69px;
+  border: none;
+
+  /* 多層陰影效果 */
+  box-shadow:
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+
+  color: rgba(255, 255, 255, 0.9);
+  transition: all .2s ease;
 }
+
 .chat-toggle-button { top: 40px; right: 40px; }
 .mic-button { bottom: 40px; right: 40px; }
+
 .chat-toggle-button:hover,
 .mic-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(16,24,40,0.18);
-  border-color: var(--gold-300);
+  filter: brightness(1.15);
+  box-shadow:
+    0px 6px 8px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.25),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.25);
 }
+
 .mic-button.recording {
-  background: linear-gradient(180deg, rgba(255,90,90,0.45), rgba(255,90,90,0.25));
-  border-color: rgba(255,120,120,0.6);
+  background: rgba(255, 90, 90, 0.15);
+  box-shadow:
+    0 0 20px rgba(255, 90, 90, 0.4),
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(255, 90, 90, 0.3),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
 }
 
 /* 垂直音量視覺化：綠→金→橙（頂端微紅），與金色主題協調 */
@@ -468,39 +691,57 @@ body {
   border-color: rgba(255, 122, 122, 0.5);
 }
 
-/* ===== 開始語音對話按鈕（左上角） ===== */
-.start-conversation-button {
+/* ===== Logo 容器 ===== */
+.logo-container {
   position: absolute;
   top: 40px;
   left: 40px;
   z-index: 100;
+  width: 120px;
+}
 
-  /* 尺寸與排版 */
-  padding: 14px 24px;
-  font-size: 15px;
-  font-weight: 700;
+.app-logo {
+  height: 28px;
+  width: 100%;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+/* ===== 開始語音對話按鈕（玻璃態設計 - 參考設計稿） ===== */
+.start-conversation-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+
+  /* 尺寸 - 完全參考設計稿 */
+  width: 350px;
+  height: 38px;
+
+  /* 玻璃態核心樣式 - 完全參考設計稿 */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 69px;
+  border: none;
+
+  /* 多層陰影效果 - 完全參考設計稿 */
+  box-shadow:
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(0, 0, 0, 0.25),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
+
+  /* 文字樣式 */
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  font-weight: 600;
   letter-spacing: 0.3px;
 
-  /* 金色漸層背景 */
-  background: linear-gradient(135deg, var(--btn-grad-start) 0%, var(--btn-grad-end) 100%);
-  color: var(--btn-txt);
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-
-  /* 陰影與光暈效果 */
-  box-shadow:
-    0 16px 48px rgba(217, 174, 82, 0.45),
-    0 8px 24px rgba(217, 174, 82, 0.35),
-    inset 0 2px rgba(255, 255, 255, 0.8),
-    inset 0 -2px rgba(0, 0, 0, 0.1);
-
-  /* 玻璃模糊 */
-  backdrop-filter: var(--blur-strong);
-  -webkit-backdrop-filter: var(--blur-strong);
-
-  /* 互動效果 */
+  /* 互動 */
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* 佈局 */
   display: flex;
@@ -510,30 +751,11 @@ body {
 }
 
 .start-conversation-button .mic-icon {
-  font-size: 18px;
-  animation: pulse 2s ease-in-out infinite;
+  font-size: 16px;
 }
 
 .start-conversation-button .button-text {
   line-height: 1;
-}
-
-.start-conversation-button:hover {
-  transform: scale(1.05);
-  box-shadow:
-    0 16px 40px rgba(217, 174, 82, 0.5),
-    0 8px 20px rgba(217, 174, 82, 0.4),
-    inset 0 2px rgba(255, 255, 255, 0.9),
-    inset 0 -2px rgba(0, 0, 0, 0.1);
-  filter: brightness(1.08);
-}
-
-.start-conversation-button:active {
-  transform: scale(0.98);
-  box-shadow:
-    0 10px 24px rgba(217, 174, 82, 0.35),
-    0 5px 12px rgba(217, 174, 82, 0.25),
-    inset 0 2px rgba(255, 255, 255, 0.7);
 }
 
 /* 麥克風圖示脈動動畫 */
@@ -548,54 +770,38 @@ body {
   }
 }
 
-/* 暗色模式適配 */
-@media (prefers-color-scheme: dark) {
-  .start-conversation-button {
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    box-shadow:
-      0 16px 48px rgba(217, 174, 82, 0.35),
-      0 8px 24px rgba(217, 174, 82, 0.25),
-      inset 0 2px rgba(255, 255, 255, 0.3),
-      inset 0 -2px rgba(0, 0, 0, 0.2);
-  }
 
-  .start-conversation-button:hover {
-    box-shadow:
-      0 20px 60px rgba(217, 174, 82, 0.45),
-      0 10px 30px rgba(217, 174, 82, 0.35),
-      inset 0 2px rgba(255, 255, 255, 0.4);
-  }
-}
-
-/* ===== 結束對話按鈕 ===== */
+/* ===== 結束對話按鈕（玻璃態設計） ===== */
 .end-conversation-button {
   position: absolute;
-  top: 40px;
+  top: 80px;
   left: 40px;
   z-index: 100;
 
-  /* 尺寸與排版 */
-  padding: 14px 24px;
-  font-size: 15px;
+  /* 尺寸與排版 - 與 logo 寬度一致 */
+  width: 120px;
+  height: 38px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.3px;
 
-  /* 紅色漸層背景 */
-  background: linear-gradient(135deg, #FF6B6B 0%, #DC3545 100%);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 14px;
+  /* 玻璃態核心樣式 - 紅色調 */
+  background: rgba(255, 90, 90, 0.12);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 69px;
+  border: none;
 
-  /* 陰影與光暈效果 */
+  /* 多層陰影效果 */
   box-shadow:
-    0 12px 32px rgba(220, 53, 69, 0.4),
-    0 6px 16px rgba(220, 53, 69, 0.3),
-    inset 0 1px rgba(255, 255, 255, 0.4),
-    inset 0 -1px rgba(0, 0, 0, 0.2);
+    0 0 30px rgba(220, 53, 69, 0.4),
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(220, 53, 69, 0.3),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.2),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.2);
 
-  /* 玻璃模糊 */
-  backdrop-filter: var(--blur-mid);
-  -webkit-backdrop-filter: var(--blur-mid);
+  color: rgba(255, 255, 255, 0.95);
 
   /* 互動效果 */
   cursor: pointer;
@@ -605,11 +811,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .end-conversation-button .end-icon {
-  font-size: 18px;
+  font-size: 14px;
   animation: endPulse 1.5s ease-in-out infinite;
 }
 
@@ -619,21 +825,26 @@ body {
 
 .end-conversation-button:hover {
   transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.2);
   box-shadow:
-    0 16px 40px rgba(220, 53, 69, 0.5),
-    0 8px 20px rgba(220, 53, 69, 0.4),
-    inset 0 1px rgba(255, 255, 255, 0.5),
-    inset 0 -1px rgba(0, 0, 0, 0.2);
-  filter: brightness(1.1);
-  border-color: rgba(255, 255, 255, 0.7);
+    0 0 40px rgba(220, 53, 69, 0.5),
+    0px 6px 8px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 2px rgba(220, 53, 69, 0.4),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.25),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.25);
 }
 
 .end-conversation-button:active {
   transform: translateY(0) scale(0.98);
+  filter: brightness(1.0);
   box-shadow:
-    0 8px 24px rgba(220, 53, 69, 0.35),
-    0 4px 12px rgba(220, 53, 69, 0.25),
-    inset 0 1px rgba(255, 255, 255, 0.3);
+    0 0 25px rgba(220, 53, 69, 0.35),
+    0px 4px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 0px 2px rgba(220, 53, 69, 0.3),
+    inset 0px 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0px 0px 15px rgba(255, 255, 255, 0.15),
+    inset 0px 15px 30px rgba(255, 255, 255, 0.15);
 }
 
 /* 結束圖示脈動動畫 */

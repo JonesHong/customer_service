@@ -1,3 +1,18 @@
+/**
+ * SplineViewer Component - 水平佈局版本 (Horizontal Layout Version)
+ *
+ * 當前配置特點：
+ * - 「點 按 喚 醒」按鈕：中央置中（top: 50%, left: 50%, transform: translate(-50%, -50%)）
+ * - Logo：左上角（top: 40px, left: 40px, width: 120px）
+ * - 結束對話按鈕：Logo 下方（top: 80px, left: 40px, width: 120px）
+ * - 對話切換按鈕：右上角，使用 SVG 圖標切換顯示/隱藏（top: 40px, right: 40px）
+ * - 麥克風按鈕：右下角（bottom: 40px, right: 40px）
+ * - SVG 反射陰影：銀白色漸層（240,245,250 → 220,230,240 → 200,215,230）
+ * - 按鈕樣式：玻璃擬態設計（padding: 6px 16px, border-radius: 69px）
+ *
+ * 可通過 /horizontal 路由訪問此佈局
+ */
+
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -18,6 +33,15 @@ import { createConnectionConfig } from "./utils/livekitClient";
 // 匯入類型
 import type { AnimationState, ChatMessage } from "./types/spline.types";
 
+const INITIAL_BUBBLE_MESSAGE =
+  "HELLO 你可以直接說話問我 OR 按下按鈕開始對話";
+const QUICK_PROMPTS = [
+  "HELLO 你可以直接說話問我",
+  "想知道廁所在哪？",
+  "附近有什麼好吃的餐廳？",
+  "過站要怎麼補票？？",
+];
+
 export default function SplineViewer() {
   // Spline 相關
   const [SplineComponent, setSplineComponent] = useState<any>(null);
@@ -34,13 +58,16 @@ export default function SplineViewer() {
   const scaleMonitorCleanupRef = useRef<(() => void) | null>(null); // 保存縮放監聽清理函數
 
   // UI 狀態
-  const [currentMessage, setCurrentMessage] = useState<string>("");
+  const [currentMessage, setCurrentMessage] = useState<string>(
+    INITIAL_BUBBLE_MESSAGE
+  );
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>("");
   const [showChat, setShowChat] = useState<boolean>(true);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
+  const [rotatingPromptIndex, setRotatingPromptIndex] = useState<number>(0);
 
   // Refs
   const messageBubbleRef = useRef<HTMLDivElement>(null);
@@ -62,12 +89,25 @@ export default function SplineViewer() {
     isUserSpeaking,
   } = useLiveKit();
 
+  const isDefaultBubble = currentMessage === INITIAL_BUBBLE_MESSAGE;
+
   // 初始化 Spline Component
   useEffect(() => {
     import("@splinetool/react-spline").then((mod) => {
       setSplineComponent(() => mod.default);
     });
   }, []);
+
+  // 輪播提示文字
+  useEffect(() => {
+    if (!isConnected && isDefaultBubble) {
+      const interval = setInterval(() => {
+        setRotatingPromptIndex((prev) => (prev + 1) % QUICK_PROMPTS.length);
+      }, 3000); // 每 3 秒切換一次
+
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, isDefaultBubble]);
 
   // 初始化管理器
   useEffect(() => {
@@ -372,10 +412,11 @@ export default function SplineViewer() {
   }
 
   // 發送訊息
-  function handleSendMessage() {
-    if (!inputText.trim() || !chatManagerRef.current) return;
+  function sendUserMessage(message: string) {
+    const trimmed = message.trim();
+    if (!trimmed || !chatManagerRef.current) return;
 
-    chatManagerRef.current.addUserMessage(inputText);
+    chatManagerRef.current.addUserMessage(trimmed);
     setInputText("");
 
     // AI 回覆（模擬）
@@ -383,6 +424,14 @@ export default function SplineViewer() {
       const response = currentMessage || "我現在沒有在說話喔～";
       chatManagerRef.current?.addAIMessage(response);
     }, 1000);
+  }
+
+  function handleSendMessage() {
+    sendUserMessage(inputText);
+  }
+
+  function handleQuickPrompt(prompt: string) {
+    sendUserMessage(prompt);
   }
 
   // 處理 Enter 鍵送出
@@ -504,7 +553,7 @@ export default function SplineViewer() {
                 <stop offset="0.25" stopColor="#000000" stopOpacity="0" />
               </radialGradient>
 
-              {/* 金黃色 radial gradient - 根據跳動高度調整 */}
+              {/* 銀白色 radial gradient - 根據跳動高度調整 */}
               <radialGradient
                 id="golden-reflection"
                 cx="0"
@@ -521,9 +570,9 @@ export default function SplineViewer() {
                   const factor = state === "reply" ? sphereYOffset / 200 : 0;
                   return (
                     <>
-                      <stop stopColor={`rgba(255, 215, 0, ${Math.max(0.3, 0.8 - factor)})`} />
-                      <stop offset="0.5" stopColor={`rgba(255, 200, 50, ${Math.max(0.2, 0.5 - factor * 0.67)})`} />
-                      <stop offset="1" stopColor={`rgba(255, 180, 30, ${Math.max(0.1, 0.3 - factor * 0.5)})`} />
+                      <stop stopColor={`rgba(240, 245, 250, ${Math.max(0.3, 0.8 - factor)})`} />
+                      <stop offset="0.5" stopColor={`rgba(220, 230, 240, ${Math.max(0.2, 0.5 - factor * 0.67)})`} />
+                      <stop offset="1" stopColor={`rgba(200, 215, 230, ${Math.max(0.1, 0.3 - factor * 0.5)})`} />
                     </>
                   );
                 })()}
@@ -569,6 +618,11 @@ export default function SplineViewer() {
           </button>
         </div>
 
+        {/* Logo */}
+        <div className="logo-container">
+          <img src="/logo.png" alt="Logo" className="app-logo"  />
+        </div>
+
         {/* 開始/結束對話按鈕 */}
         {!isConnected && (
           <button
@@ -576,7 +630,7 @@ export default function SplineViewer() {
             onClick={handleStartConversation}
           >
             <span className="mic-icon">🎙️</span>
-            <span className="button-text">開始語音對話</span>
+            <span className="button-text">點 按 喚 醒</span>
           </button>
         )}
 
@@ -618,7 +672,20 @@ export default function SplineViewer() {
           onClick={() => setShowChat(!showChat)}
           title={showChat ? "隱藏對話記錄" : "顯示對話記錄"}
         >
-          {showChat ? "💬 隱藏對話" : "💬 顯示對話"}
+          {showChat ? (
+            // 隱藏對話 - X 圖標
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            // 顯示對話 - 對話泡泡圖標
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.2002 5V4V5ZM18.3623 5.32715L18.8164 4.4362L18.8163 4.43614L18.3623 5.32715ZM19.6729 6.6377L20.5639 6.1837L20.5638 6.18359L19.6729 6.6377ZM20 9.7998H21H20ZM20 12.2002H21H20ZM19.6729 15.3623L20.5638 15.8164L20.5639 15.8163L19.6729 15.3623ZM18.3623 16.6729L18.8163 17.5639L18.8164 17.5638L18.3623 16.6729ZM15.2002 17V18V17ZM4.76855 20.2314L4.06145 19.5243H4.06145L4.76855 20.2314ZM4 19.9141H3L3 19.915L4 19.9141ZM4 9.7998H3H4ZM4.32715 6.6377L3.4362 6.18359L3.43614 6.1837L4.32715 6.6377ZM5.6377 5.32715L5.1837 4.43614L5.18359 4.4362L5.6377 5.32715ZM8.7998 5V4V5ZM7.70711 17.2929L7 16.5858L7.70711 17.2929ZM15.2002 5V6C16.0566 6 16.639 6.00082 17.0891 6.03763C17.5276 6.07349 17.7519 6.13845 17.9083 6.21815L18.3623 5.32715L18.8163 4.43614C18.331 4.18887 17.8143 4.09026 17.2521 4.04429C16.7016 3.99927 16.0238 4 15.2002 4V5ZM18.3623 5.32715L17.9082 6.2181C18.2844 6.40981 18.5902 6.71565 18.7819 7.0918L19.6729 6.6377L20.5638 6.18359C20.1804 5.4313 19.5687 4.81963 18.8164 4.4362L18.3623 5.32715ZM19.6729 6.6377L18.7818 7.09169C18.8615 7.24811 18.9265 7.47241 18.9624 7.91089C18.9992 8.361 19 8.94335 19 9.7998H20H21C21 8.97623 21.0007 8.29838 20.9557 7.74787C20.9097 7.18573 20.8111 6.66899 20.5639 6.1837L19.6729 6.6377ZM20 9.7998H19V12.2002H20H21V9.7998H20ZM20 12.2002H19C19 13.0566 18.9992 13.639 18.9624 14.0891C18.9265 14.5276 18.8615 14.7519 18.7818 14.9083L19.6729 15.3623L20.5639 15.8163C20.8111 15.331 20.9097 14.8143 20.9557 14.2521C21.0007 13.7016 21 13.0238 21 12.2002H20ZM19.6729 15.3623L18.7819 14.9082C18.5902 15.2844 18.2844 15.5902 17.9082 15.7819L18.3623 16.6729L18.8164 17.5638C19.5687 17.1804 20.1804 16.5687 20.5638 15.8164L19.6729 15.3623ZM18.3623 16.6729L17.9083 15.7818C17.7519 15.8615 17.5276 15.9265 17.0891 15.9624C16.639 15.9992 16.0566 16 15.2002 16V17V18C16.0238 18 16.7016 18.0007 17.2521 17.9557C17.8143 17.9097 18.331 17.8111 18.8163 17.5639L18.3623 16.6729ZM15.2002 17V16H8.41421V17V18H15.2002V17ZM7.70711 17.2929L7 16.5858L4.06145 19.5243L4.76855 20.2314L5.47566 20.9386L8.41421 18L7.70711 17.2929ZM4.76855 20.2314L4.06145 19.5243C4.40614 19.1796 4.99955 19.421 5 19.9131L4 19.9141L3 19.915C3.00119 21.2083 4.56422 21.85 5.47566 20.9386L4.76855 20.2314ZM4 19.9141H5V9.7998H4H3V19.9141H4ZM4 9.7998H5C5 8.94335 5.00082 8.361 5.03763 7.91089C5.07349 7.47241 5.13845 7.24811 5.21815 7.09169L4.32715 6.6377L3.43614 6.1837C3.18887 6.66899 3.09026 7.18573 3.04429 7.74787C2.99927 8.29838 3 8.97623 3 9.7998H4ZM4.32715 6.6377L5.2181 7.0918C5.40981 6.71565 5.71565 6.40981 6.0918 6.2181L5.6377 5.32715L5.18359 4.4362C4.4313 4.81963 3.81963 5.4313 3.4362 6.18359L4.32715 6.6377ZM5.6377 5.32715L6.09169 6.21815C6.24811 6.13845 6.47241 6.07349 6.91089 6.03763C7.361 6.00082 7.94335 6 8.7998 6V5V4C7.97623 4 7.29838 3.99927 6.74787 4.04429C6.18573 4.09026 5.66899 4.18887 5.1837 4.43614L5.6377 5.32715ZM8.7998 5V6H15.2002V5V4H8.7998V5ZM8.41421 17V16C7.88378 16 7.37507 16.2107 7 16.5858L7.70711 17.2929L8.41421 18V17Z" fill="white"/>
+              <path d="M8 9L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 13L13 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
         </button>
 
         {/* 麥克風按鈕 */}
@@ -647,10 +714,10 @@ export default function SplineViewer() {
           </div>
         )}
 
-        {/* 訊息框 */}
-        {currentMessage && (
+        {/* 訊息框 - 只在連接後顯示 */}
+        {isConnected && currentMessage && (
           <div className="message-bubble">
-            <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <path
                   id="bubble-path"
@@ -659,38 +726,17 @@ export default function SplineViewer() {
                      l-15,-34
                      l60,34
                      H420 a24,24 0 0 1 24,24
-                     V156 a24,24 0 0 1 -24,24
+                     V256 a24,24 0 0 1 -24,24
                      H60  a24,24 0 0 1 -24,-24
                      V70  a24,24 0 0 1 24,-24
                      Z"
                 />
 
                 <clipPath id="text-clip-path" clipPathUnits="userSpaceOnUse">
-                  <rect x="44" y="46" width="408" height="110" rx="24" />
+                  <rect x="20" y="18" width="440" height="250" rx="24" />
                 </clipPath>
 
-                <linearGradient id="gold-glass" x1="0" y1="0" x2="0" y2="1">
-                  <stop stopColor="rgba(247, 233, 203, 0.75)" />
-                </linearGradient>
               </defs>
-
-              <use href="#bubble-path" fill="url(#gold-glass)" />
-              <use
-                href="#bubble-path"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="16"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-              <use
-                href="#bubble-path"
-                fill="none"
-                stroke="#B3852F"
-                strokeWidth="6"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
             </svg>
 
             <div className="message-bubble__content message-bubble__clipped">
@@ -698,7 +744,28 @@ export default function SplineViewer() {
                 className="message-bubble__scrollable"
                 ref={messageBubbleRef}
               >
-                {currentMessage}
+                {isDefaultBubble ? (
+                  <div className="message-bubble__default">
+                    <p className="message-bubble__headline">
+                      {QUICK_PROMPTS[rotatingPromptIndex]}
+                    </p>
+                    <p className="message-bubble__divider">OR</p>
+                    <div className="message-bubble__buttons">
+                      {QUICK_PROMPTS.slice(1).map((prompt) => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          className="message-bubble__button"
+                          onClick={() => handleQuickPrompt(prompt)}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  currentMessage
+                )}
               </div>
             </div>
           </div>
@@ -708,7 +775,7 @@ export default function SplineViewer() {
       {/* 右側：聊天區 */}
       {showChat && (
         <div className="right-panel glass-panel">
-          <div className="chat-header glass-subtle">
+          <div className="chat-header">
             <h2>對話記錄</h2>
           </div>
 
