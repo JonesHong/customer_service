@@ -139,6 +139,18 @@ export function useLiveKit() {
         }
       });
 
+      // 🔍 監聽 ChatMessage 事件（調試用）
+      room.on(RoomEvent.ChatMessage, (message, participant) => {
+        console.log('=' .repeat(80));
+        console.log('💬 [CHAT_MESSAGE_EVENT] ChatMessage event fired!');
+        console.log('💬 [CHAT_MESSAGE_EVENT] Message:', message);
+        console.log('💬 [CHAT_MESSAGE_EVENT] Participant:', participant?.identity || 'local');
+        console.log('💬 [CHAT_MESSAGE_EVENT] Message ID:', message.id);
+        console.log('💬 [CHAT_MESSAGE_EVENT] Message text:', message.message);
+        console.log('💬 [CHAT_MESSAGE_EVENT] Timestamp:', message.timestamp);
+        console.log('=' .repeat(80));
+      });
+
       // ✅ 監聽遠端音訊軌道（Agent TTS） - 使用官方推薦方式
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
         console.log('🎵 Track subscribed:', track.kind, participant.identity);
@@ -424,6 +436,57 @@ export function useLiveKit() {
     }
   }, []);
 
+  // ✅ 發送文字訊息到 LiveKit room
+  const sendTextMessage = useCallback(async (text: string) => {
+    if (!roomRef.current) {
+      console.error('❌ Room not connected, cannot send text message');
+      throw new Error('Room not connected');
+    }
+
+    if (!text.trim()) {
+      console.warn('⚠️ Cannot send empty text message');
+      return;
+    }
+
+    try {
+      console.log('📤 Sending text message:', text);
+      console.log('📤 Room state:', roomRef.current.state);
+      console.log('📤 Local participant:', roomRef.current.localParticipant.identity);
+      console.log('📤 Remote participants:', Array.from(roomRef.current.remoteParticipants.keys()));
+
+      // 🔧 CRITICAL FIX: Use streamText instead of publishData
+      // RoomIO expects text streams, not single data packets
+      // Based on DeepWiki research: RoomIO registers text_stream_handler which requires stream_header_received event
+      // API: localParticipant.streamText(options) introduced in SDK 2.9.0
+      console.log('📤 Creating text stream with topic: lk.chat');
+
+      const writer = await roomRef.current.localParticipant.streamText({
+        topic: 'lk.chat'  // ✅ Match Python SDK's TOPIC_CHAT
+      });
+
+      console.log('✅ Text stream writer created');
+      console.log('📤 Writing text to stream:', text);
+
+      await writer.write(text);
+      await writer.close();
+
+      console.log('✅ Text message sent successfully via streamText');
+      console.log('✅ Message:', text);
+      console.log('✅ Topic: lk.chat');
+
+      // ✅ 不在這裡添加轉錄記錄！
+      // Agent 會通過 DataChannel 回傳用戶訊息（第306行接收）
+      // 這樣可以避免重複顯示
+    } catch (error) {
+      console.error('❌ Failed to send text message:', error);
+      console.error('❌ Error details:', {
+        message: (error as Error).message,
+        stack: (error as Error).stack
+      });
+      throw error;
+    }
+  }, []);
+
   // 斷開連接
   const disconnect = useCallback(async () => {
     const room = roomRef.current;
@@ -470,6 +533,7 @@ export function useLiveKit() {
     publishMicrophone,
     unpublishMicrophone,
     unmuteAgentAudio,
+    sendTextMessage, // ✅ 新增文字訊息發送功能
     isConnected,
     isPublishing,
     agentState,

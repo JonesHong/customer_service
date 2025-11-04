@@ -84,7 +84,7 @@ async def get_token(request: Request, body: TokenRequest):
             room=body.room,
             can_publish=True,      # 可發布音訊
             can_subscribe=True,    # 可訂閱音訊
-            can_publish_data=False,  # 不可發布數據
+            can_publish_data=True,   # ✅ 允許發布數據（文字訊息需要）
             hidden=False,          # 不隱藏
         ))
 

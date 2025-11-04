@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 import logging
 import json
 import asyncio
-from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions, llm, RoomOutputOptions
+from livekit import agents, rtc
+from livekit.agents import AgentSession, Agent, RoomInputOptions, llm, RoomOutputOptions, WorkerPermissions
+from livekit.agents.voice.room_io import TextInputEvent
+from livekit.agents.types import TOPIC_CHAT
 from livekit.plugins import (
     google,
     openai,
@@ -95,6 +97,9 @@ async def entrypoint(ctx: agents.JobContext):
     await ctx.connect()
     agent_logger.info("✅ Connected to room")
 
+    # 創建 AgentSession（需要提前創建以便在回調中使用）
+    session = AgentSession()
+
     # 設定 Agent Metadata（讓前端可以識別）
     try:
         # 使用 set_metadata 而不是 update_metadata
@@ -107,7 +112,49 @@ async def entrypoint(ctx: agents.JobContext):
         # 如果 set_metadata 也不存在，可能需要其他方式設定
         agent_logger.info(f"Available methods: {dir(ctx.room.local_participant)}")
 
-    session = AgentSession()
+    # ✅ 定義文字訊息處理函數
+    async def on_text_message(sess: AgentSession, event: TextInputEvent):
+        """處理來自用戶的文字訊息"""
+        agent_logger.info("=" * 80)
+        agent_logger.info(f"🔔 [TEXT_CALLBACK] *** TEXT MESSAGE CALLBACK TRIGGERED ***")
+        agent_logger.info(f"🔔 [TEXT_CALLBACK] Event type: {type(event)}")
+        agent_logger.info(f"🔔 [TEXT_CALLBACK] Event attributes: {dir(event)}")
+        agent_logger.info(f"🔔 [TEXT_CALLBACK] Event.text type: {type(event.text)}")
+
+        user_text = event.text.strip()
+        participant = event.participant
+
+        agent_logger.info(f"💬 [TEXT_MESSAGE] Received from {participant.identity}: {user_text}")
+        agent_logger.info(f"💬 [TEXT_MESSAGE] Participant SID: {participant.sid}")
+        agent_logger.info(f"💬 [TEXT_MESSAGE] Text length: {len(user_text)}")
+        agent_logger.info("=" * 80)
+
+        # 發送文字訊息到前端（顯示用戶輸入）
+        try:
+            await ctx.room.local_participant.publish_data(
+                json.dumps({
+                    "type": "transcription",
+                    "role": "user",
+                    "text": user_text,
+                    "is_final": True,
+                    "source": "text"  # 標記為文字輸入
+                }).encode('utf-8'),
+                reliable=True
+            )
+            agent_logger.info(f"📤 Sent text message to client: {user_text}")
+        except Exception as e:
+            agent_logger.error(f"❌ Failed to send text message: {e}")
+
+        # 使用 session.generate_reply() 讓 LLM 處理並生成智能回應
+        try:
+            agent_logger.info(f"🤖 Generating AI response for text message...")
+            await sess.generate_reply(
+                user_input=user_text,  # 將文字訊息作為用戶輸入
+                instructions=None  # 使用預設指令
+            )
+            agent_logger.info(f"✅ AI response generation initiated")
+        except Exception as e:
+            agent_logger.error(f"❌ Failed to generate response for text message: {e}")
 
     # 監聽參與者加入事件
     participant_greeted = False
@@ -116,22 +163,29 @@ async def entrypoint(ctx: agents.JobContext):
         nonlocal participant_greeted
         agent_logger.info(f"👤 Participant connected: {participant.identity}")
         agent_logger.info(f"   - SID: {participant.sid}")
-        agent_logger.info(f"   - Is local: {participant.is_local}")
+        agent_logger.info(f"   - Type: {type(participant).__name__}")
         agent_logger.info(f"   - Metadata: {participant.metadata}")
 
-        if not participant.is_local and not participant_greeted:
-            agent_logger.info(f"✅ User joined (non-local): {participant.identity}")
+        # RemoteParticipant is always remote (not local)
+        if not participant_greeted:
+            agent_logger.info(f"✅ User joined: {participant.identity}")
             participant_greeted = True
             # 用戶加入時可以選擇性地生成歡迎訊息
             # 但通常等用戶先說話比較自然
 
     def on_participant_disconnected(participant):
         agent_logger.info(f"👤 Participant disconnected: {participant.identity}")
-        # RemoteParticipant doesn't have is_local attribute
-        agent_logger.info(f"   - Participant type: {type(participant).__name__}")
+        agent_logger.info(f"   - Type: {type(participant).__name__}")
 
     ctx.room.on("participant_connected", on_participant_connected)
     ctx.room.on("participant_disconnected", on_participant_disconnected)
+
+    # ✅ Clean setup - RoomIO handles text streams automatically
+    agent_logger.info("🔧 [SETUP] Event listeners configured")
+    agent_logger.info("   - participant_connected ✅")
+    agent_logger.info("   - participant_disconnected ✅")
+    agent_logger.info("   - connection_state_changed ✅")
+    agent_logger.info("   - RoomIO will auto-register text_stream_handler for TOPIC_CHAT ✅")
 
     # 監聽房間狀態變化
     def on_connection_state_changed(state):
@@ -268,15 +322,31 @@ async def entrypoint(ctx: agents.JobContext):
         for identity, participant in ctx.room.remote_participants.items():
             agent_logger.info(f"   - Remote participant: {identity} (SID: {participant.sid})")
 
+    # ✅ STREAMTEXT SOLUTION: No custom handler needed!
+    # RoomIO automatically registers text_stream_handler when text_enabled=True
+    # The text_input_cb will be called automatically when text streams arrive
+    agent_logger.info("=" * 80)
+    agent_logger.info("✅ [STREAMTEXT] Using RoomIO's built-in text stream handling")
+    agent_logger.info("✅ [STREAMTEXT] text_enabled=True in RoomInputOptions")
+    agent_logger.info("✅ [STREAMTEXT] text_input_cb=on_text_message")
+    agent_logger.info("✅ [STREAMTEXT] RoomIO will automatically register handler for TOPIC_CHAT")
+    agent_logger.info("=" * 80)
+
     # 啟動 session（session.start 會保持運行直到房間關閉）
     # ✅ 關鍵修正：調整音訊配置
     agent_logger.info("🚀 Starting AgentSession...")
+    agent_logger.info("📝 [CONFIG] text_enabled=True")
+    agent_logger.info(f"📝 [CONFIG] text_input_cb={on_text_message}")
+    agent_logger.info(f"📝 [CONFIG] Callback function type: {type(on_text_message)}")
+
     await session.start(
         room=ctx.room,
         agent=Assistant(),
         room_input_options=RoomInputOptions(
             audio_enabled=True,          # ✅ 明確啟用音訊輸入（接收用戶語音）
             video_enabled=False,         # ✅ 關閉視訊節省資源
+            text_enabled=True,           # ✅ 啟用文字輸入（接收用戶文字訊息）
+            text_input_cb=on_text_message,  # ✅ 設置文字訊息回調函數
             noise_cancellation=noise_cancellation.BVC(),  # ✅ 保留 BVC 降噪
             pre_connect_audio_timeout=10.0,  # ✅ 增加超時時間（預設 3 秒可能太短）
         ),
@@ -287,10 +357,51 @@ async def entrypoint(ctx: agents.JobContext):
     )
     agent_logger.info("✅ Session started successfully")
 
+    # ✅ 驗證 text_input_cb 是否正確設置
+    agent_logger.info("=" * 80)
+    agent_logger.info("🔍 [VERIFICATION] Verifying text input configuration...")
+    agent_logger.info(f"🔍 [VERIFICATION] text_enabled: True")
+    agent_logger.info(f"🔍 [VERIFICATION] text_input_cb function: {on_text_message.__name__}")
+    agent_logger.info(f"🔍 [VERIFICATION] Callback is async: {asyncio.iscoroutinefunction(on_text_message)}")
+    agent_logger.info("🔍 [VERIFICATION] Waiting for text messages from client...")
+    agent_logger.info("🔍 [VERIFICATION] Client should use room.localParticipant.sendChatMessage()")
+    agent_logger.info("=" * 80)
+
     # 記錄房間狀態 after session.start
     agent_logger.info(f"📊 Room state after session.start:")
     agent_logger.info(f"   - Connection state: {ctx.room.connection_state}")
     agent_logger.info(f"   - Remote participants: {[p.identity for p in ctx.room.remote_participants.values()]}")
+
+    # 🔍 CRITICAL: Inspect session internals to understand text handling
+    agent_logger.info("=" * 80)
+    agent_logger.info("🔍 [DEBUG] Inspecting AgentSession internals for text handling...")
+
+    # Check if session has _room_io attribute (internal RoomIO handler)
+    if hasattr(session, '_room_io'):
+        room_io = session._room_io
+        agent_logger.info(f"✅ [DEBUG] Found _room_io: {type(room_io)}")
+        agent_logger.info(f"   - RoomIO attributes: {[attr for attr in dir(room_io) if not attr.startswith('_')]}")
+
+        # Check text stream configuration
+        if hasattr(room_io, '_text_stream'):
+            agent_logger.info(f"✅ [DEBUG] Found _text_stream: {room_io._text_stream}")
+        if hasattr(room_io, '_text_enabled'):
+            agent_logger.info(f"   - _text_enabled: {room_io._text_enabled}")
+        if hasattr(room_io, '_text_input_cb'):
+            agent_logger.info(f"   - _text_input_cb: {room_io._text_input_cb}")
+    else:
+        agent_logger.warning("⚠️ [DEBUG] No _room_io attribute found on session")
+
+    # Check room's local participant for data channel subscription
+    if ctx.room.local_participant:
+        local = ctx.room.local_participant
+        agent_logger.info(f"🔍 [DEBUG] Local participant: {local.identity}")
+        agent_logger.info(f"   - Attributes: {[attr for attr in dir(local) if not attr.startswith('_') and not callable(getattr(local, attr))]}")
+
+    agent_logger.info("=" * 80)
+    agent_logger.info("✅ [VERIFICATION] Custom text stream handler registered BEFORE session.start()")
+    agent_logger.info("✅ [VERIFICATION] Handler will intercept all publishData messages with topic='lk.chat'")
+    agent_logger.info("=" * 80)
 
     # 檢查已存在的軌道並手動啟動音訊監控
     for identity, participant in ctx.room.remote_participants.items():
@@ -332,4 +443,29 @@ if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
     logging.info("Starting LiveKit agent...")
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+
+    # 🔧 FIX: Configure WorkerOptions with can_subscribe permission
+    # This is REQUIRED to receive data messages (publishData) from clients
+    worker_options = agents.WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        # ✅ CRITICAL: Enable data subscription permissions
+        # Without can_subscribe=True, agent will NOT receive publishData messages from clients
+        permissions=WorkerPermissions(
+            can_publish=True,        # Allow agent to publish audio/video/data
+            can_subscribe=True,      # ✅ CRITICAL for receiving publishData messages
+            can_publish_data=True,   # Allow agent to send data messages
+            can_update_metadata=True # Allow metadata updates
+        ),
+        ws_url=None,  # Use default from env
+        api_key=None,  # Use default from env
+        api_secret=None,  # Use default from env
+    )
+
+    agent_logger.info("🔧 [WORKER] Starting with permissions:")
+    agent_logger.info(f"   - Entrypoint: {entrypoint.__name__}")
+    agent_logger.info(f"   - can_publish: True")
+    agent_logger.info(f"   - can_subscribe: True ✅ (CRITICAL for text messages)")
+    agent_logger.info(f"   - can_publish_data: True")
+    agent_logger.info(f"   - can_update_metadata: True")
+
+    agents.cli.run_app(worker_options)

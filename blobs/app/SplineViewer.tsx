@@ -81,6 +81,7 @@ export default function SplineViewer() {
     publishMicrophone,
     unpublishMicrophone,
     unmuteAgentAudio,
+    sendTextMessage, // ✅ 新增文字訊息發送功能
     isConnected,
     isPublishing,
     agentState,
@@ -412,18 +413,35 @@ export default function SplineViewer() {
   }
 
   // 發送訊息
-  function sendUserMessage(message: string) {
+  async function sendUserMessage(message: string) {
     const trimmed = message.trim();
     if (!trimmed || !chatManagerRef.current) return;
 
-    chatManagerRef.current.addUserMessage(trimmed);
-    setInputText("");
+    // ✅ 如果已連接到 LiveKit，發送文字訊息到 agent
+    if (isConnected && sendTextMessage) {
+      try {
+        console.log("📤 Sending text message to agent:", trimmed);
+        await sendTextMessage(trimmed);
+        setInputText("");
+        console.log("✅ Text message sent successfully");
+        // 注意：不需要手動添加到聊天歷史，sendTextMessage 已經處理了
+      } catch (error) {
+        console.error("❌ Failed to send text message:", error);
+        // 降級處理：添加到本地聊天歷史
+        chatManagerRef.current.addUserMessage(trimmed);
+        setInputText("");
+      }
+    } else {
+      // 未連接時的降級處理（顯示本地訊息）
+      chatManagerRef.current.addUserMessage(trimmed);
+      setInputText("");
 
-    // AI 回覆（模擬）
-    setTimeout(() => {
-      const response = currentMessage || "我現在沒有在說話喔～";
-      chatManagerRef.current?.addAIMessage(response);
-    }, 1000);
+      // AI 回覆（模擬）
+      setTimeout(() => {
+        const response = currentMessage || "我現在沒有在說話喔～";
+        chatManagerRef.current?.addAIMessage(response);
+      }, 1000);
+    }
   }
 
   function handleSendMessage() {
