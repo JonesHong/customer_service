@@ -2,6 +2,8 @@
 
 /* 全域變數（亮色） */
 :root {
+  --ui-scale: 1;
+  --ui-font-scale: 1;
   /* 香檳金系 */
   --gold-50:  rgba(253, 246, 231, 0.75);
   --gold-100: rgba(250, 236, 205, 0.85);
@@ -90,6 +92,7 @@ html, body, main {
 body {
   font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "SF Pro Text",
         "Segoe UI", Roboto, "Noto Sans TC", Arial, "Microsoft JhengHei", sans-serif;
+  font-size: calc(14px * var(--ui-font-scale));
   letter-spacing: .2px;
   color: var(--txt-strong);
 }
@@ -99,9 +102,9 @@ body {
   display: grid;
   grid-template-columns: 1fr;
   grid-auto-rows: 1fr;
-  gap: 20px;
+  gap: calc(20px * var(--ui-scale));
   height: 100vh;
-  padding: 18px;
+  padding: calc(18px * var(--ui-scale));
   align-items: stretch;
   background:
     radial-gradient(1200px 800px at 10% 0%, var(--bg-aurora-1), transparent 60%),
@@ -134,7 +137,7 @@ body {
 
 .left-panel > :first-child {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  transform: scale(0.6);
+  transform: scale(calc(0.6 * var(--ui-scale)));
 }
 
 /* ===== 玻璃卡（統一材質） ===== */
@@ -142,9 +145,9 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  border-radius: 24px;
-  padding: 28px 26px 36px;
+  gap: calc(20px * var(--ui-scale));
+  border-radius: calc(24px * var(--ui-scale));
+  padding: calc(28px * var(--ui-scale)) calc(26px * var(--ui-scale)) calc(36px * var(--ui-scale));
   background: rgba(255, 255, 255, 0.05);
   box-shadow:
     0px 4px 4px rgba(0, 0, 0, 0.25),
@@ -173,9 +176,12 @@ body {
 /* ===== 控制鈕列（玻璃態設計） ===== */
 .controls {
   position: absolute;
-  bottom: 40px; left: 50%;
+  bottom: calc(40px * var(--ui-scale));
+  left: 50%;
   transform: translateX(-50%);
-  display: flex; gap: 16px; z-index: 100;
+  display: flex;
+  gap: calc(16px * var(--ui-scale));
+  z-index: 100;
 }
 
 .controls button {
@@ -194,9 +200,10 @@ body {
     inset 0px 0px 15px rgba(255, 255, 255, 0.2),
     inset 0px 15px 30px rgba(255, 255, 255, 0.2);
 
-  padding: 8px 16px;
+  padding: calc(8px * var(--ui-scale)) calc(16px * var(--ui-scale));
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
+  font-size: calc(14px * var(--ui-font-scale));
   cursor: pointer;
   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
@@ -233,13 +240,16 @@ body {
 /* 狀態膠囊 */
 .status-indicator {
   position: absolute;
-  top: 40px; left: 50%; transform: translateX(-50%);
-  padding: 10px 22px;
+  top: calc(40px * var(--ui-scale));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: calc(10px * var(--ui-scale)) calc(22px * var(--ui-scale));
   background: rgba(0,0,0,0.45);
   color: #fff;
   border: 1px solid rgba(255,255,255,0.28);
-  border-radius: 18px;
-  font-size: 13px; font-weight: 600;
+  border-radius: calc(18px * var(--ui-scale));
+  font-size: calc(13px * var(--ui-font-scale));
+  font-weight: 600;
   letter-spacing: .2px;
   backdrop-filter: var(--blur-mid);
   z-index: 100;
@@ -283,10 +293,12 @@ body {
 /* 真正可滾動的文字區，使用固定像素值對齊 SVG */
 .message-bubble__scrollable {
   position: relative;
-  width: 396px; /* 440px - padding 左右各 22px */
-  max-height: 280px; /* 足夠顯示初始內容（標題+分隔+三個按鈕），純文字超過四行時滾動 */
-  padding: 12px 22px 20px;
-  margin: 20px 12px;
+  width: calc(396px * var(--ui-scale)); /* 440px - padding 左右各 22px */
+  max-height: calc(280px * var(--ui-scale)); /* 足夠顯示初始內容（標題+分隔+三個按鈕），純文字超過四行時滾動 */
+  padding: calc(12px * var(--ui-scale))
+           calc(22px * var(--ui-scale))
+           calc(20px * var(--ui-scale));
+  margin: calc(20px * var(--ui-scale)) calc(12px * var(--ui-scale));
 
   overflow-y: auto;
   overflow-x: hidden;
@@ -297,8 +309,8 @@ body {
   font-family: 'Noto Looped Thai', system-ui, -apple-system, "Noto Sans TC", Arial, "Microsoft JhengHei", sans-serif;
   font-style: normal;
   font-weight: 600;
-  font-size: 16px;
-  line-height: 19px;
+  font-size: calc(16px * var(--ui-font-scale));
+  line-height: calc(19px * var(--ui-font-scale));
   text-align: center;
   color: #FFFFFF;
   text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
@@ -312,13 +324,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: calc(10px * var(--ui-scale));
   width: 100%;
 }
 
 .message-bubble__headline {
   font-weight: 700;
-  font-size: 18px;
+  font-size: calc(18px * var(--ui-font-scale));
   letter-spacing: .3px;
   line-height: 1.35;
   margin: 0;
@@ -327,8 +339,8 @@ body {
 
 .message-bubble__divider {
   font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 4px;
+  font-size: calc(13px * var(--ui-font-scale));
+  letter-spacing: calc(4px * var(--ui-scale));
   line-height: 1;
   margin: 0;
 }
@@ -337,17 +349,18 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(8px * var(--ui-scale));
 }
 
 .message-bubble__button {
   width: 100%;
-  padding: 10px 18px;
-  border-radius: 14px;
+  padding: calc(10px * var(--ui-scale)) calc(18px * var(--ui-scale));
+  border-radius: calc(14px * var(--ui-scale));
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(0, 0, 0, 0.35);
   color: #FFFFFF;
   font-weight: 500;
+  font-size: calc(14px * var(--ui-font-scale));
   letter-spacing: .2px;
   text-align: center;
   cursor: pointer;
@@ -410,10 +423,11 @@ body {
 
 .message-bubble {
   position: absolute;
-  bottom: 90px;
+  top: calc(50% + (120px * var(--ui-scale))); /* 固定氣泡上緣位置 */
   left: 50%;
-  transform: translateX(-50%) translateY(30px);
-  width: min(90%, 460px);
+  transform: translateX(-50%);
+  width: min(90%, calc(460px * var(--ui-scale)));
+  max-height: calc(320px * var(--ui-scale)); /* 限制最大高度避免超出畫面 */
   z-index: 99;
   animation: bubbleIn .4s cubic-bezier(0.34,1.56,0.64,1);
 
@@ -422,65 +436,72 @@ body {
   flex-direction: column;
   min-height: fit-content;
 
-  /* Glassmorphism styling */
-  background: rgba(255, 255, 255, 0.05);
+  /* Glassmorphism styling - 平衡透明度讓文字清晰 */
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25),
               inset 0px 0px 2px rgba(0, 0, 0, 0.25),
               inset 0px 1px 1px rgba(255, 255, 255, 0.5),
               inset 0px 0px 15px rgba(255, 255, 255, 0.2),
               inset 0px 15px 30px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border-radius: 7px;
 }
 @keyframes bubbleIn { 0%{opacity:0; transform: translateX(-50%) scale(.8) translateY(20px);} 100%{opacity:1; transform: translateX(-50%) scale(1) translateY(0);} }
+
+/* 當展開歷史對話時隱藏訊息氣泡 */
+.app-container:has(.right-panel) .message-bubble {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
 
 /* ===== 右側聊天 ===== */
 .chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 6px;
+  padding: calc(2px * var(--ui-scale)) calc(6px * var(--ui-scale));
   color: rgba(255, 255, 255, 0.82);
 }
 
 .chat-header h2 {
   margin: 0;
   font-weight: 600;
-  font-size: 15px;
+  font-size: calc(15px * var(--ui-font-scale));
   letter-spacing: .3px;
 }
 
 .chat-messages {
   flex: 1;
-  padding: 0 2px;
+  padding: 0 calc(2px * var(--ui-scale));
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: calc(14px * var(--ui-scale));
   scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent;
 }
 .chat-messages::-webkit-scrollbar { width: 8px; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 20px; }
 
-/* 訊息泡泡（統一金色材質） */
+/* 訊息泡泡（統一金色材質）- 平衡透明度讓文字清晰 */
 .message-bubble-glass {
-  max-width: min(88%, 560px);
-  padding: 14px 18px 30px;
-  border-radius: 18px;
+  max-width: min(88%, calc(560px * var(--ui-scale)));
+  padding: calc(14px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(30px * var(--ui-scale));
+  border-radius: calc(18px * var(--ui-scale));
   position: relative;
   line-height: 1.55;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-font-scale));
   letter-spacing: .2px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   box-shadow:
     0px 4px 4px rgba(0, 0, 0, 0.25),
     inset 0px 0px 2px rgba(0, 0, 0, 0.25),
     inset 0px 1px 1px rgba(255, 255, 255, 0.5),
     inset 0px 0px 15px rgba(255, 255, 255, 0.2),
     inset 0px 15px 30px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(35px);
+  -webkit-backdrop-filter: blur(35px);
   border: 1px solid rgba(255, 255, 255, 0.28);
   color: rgba(255, 255, 255, 0.92);
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
@@ -521,14 +542,14 @@ body {
 .message-text {
   white-space: pre-wrap;
   word-break: break-word;
-  padding-bottom: 4px; /* 為時間戳留出空間 */
-  min-height: 18px; /* 確保有足夠高度 */
+  padding-bottom: calc(4px * var(--ui-scale)); /* 為時間戳留出空間 */
+  min-height: calc(18px * var(--ui-scale)); /* 確保有足夠高度 */
 }
 .message-time {
   position: absolute;
-  bottom: 6px;
-  right: 10px;
-  font-size: 11px;
+  bottom: calc(6px * var(--ui-scale));
+  right: calc(10px * var(--ui-scale));
+  font-size: calc(11px * var(--ui-font-scale));
   color: rgba(255, 255, 255, 0.55);
   pointer-events: none; /* 防止遮擋選取文字 */
   white-space: nowrap; /* 時間戳不換行 */
@@ -536,9 +557,9 @@ body {
 
 /* 輸入區（膠囊玻璃 + 金色主按鈕） */
 .glass-input {
-  margin-top: 10px;
-  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
-  padding: 8px; border-radius: 16px;
+  margin-top: calc(10px * var(--ui-scale));
+  display: grid; grid-template-columns: 1fr auto; gap: calc(8px * var(--ui-scale)); align-items: center;
+  padding: calc(8px * var(--ui-scale)); border-radius: calc(16px * var(--ui-scale));
   background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.28));
   border: 1px solid var(--glass-border);
   box-shadow: inset 0 1px var(--glass-inset);
@@ -548,8 +569,8 @@ body {
 }
 
 .chat-input {
-  width: 100%; height: 42px; border: 0; outline: none; border-radius: var(--radius-pill);
-  padding: 0 14px; font-size: 16px;
+  width: 100%; height: calc(42px * var(--ui-scale)); border: 0; outline: none; border-radius: var(--radius-pill);
+  padding: 0 calc(14px * var(--ui-scale)); font-size: calc(16px * var(--ui-font-scale));
   background: rgba(255,255,255,0.75);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
 }
@@ -560,11 +581,12 @@ body {
 }
 
 .send-button {
-  height: 42px;
-  padding: 0 20px;
+  height: calc(42px * var(--ui-scale));
+  padding: 0 calc(20px * var(--ui-scale));
   border: none;
   cursor: pointer;
   font-weight: 700;
+  font-size: calc(14px * var(--ui-font-scale));
   letter-spacing: .2px;
 
   /* 玻璃態核心樣式 */
@@ -605,8 +627,8 @@ body {
 .chat-toggle-button,
 .mic-button {
   position: absolute;
-  padding: 6px 16px;
-  font-size: 16px;
+  padding: calc(6px * var(--ui-scale)) calc(16px * var(--ui-scale));
+  font-size: calc(16px * var(--ui-font-scale));
   font-weight: 700;
   cursor: pointer;
   z-index: 100;
@@ -630,8 +652,8 @@ body {
   transition: all .2s ease;
 }
 
-.chat-toggle-button { top: 40px; right: 40px; }
-.mic-button { bottom: 40px; right: 40px; }
+.chat-toggle-button { top: calc(40px * var(--ui-scale)); right: calc(40px * var(--ui-scale)); }
+.mic-button { bottom: calc(40px * var(--ui-scale)); right: calc(40px * var(--ui-scale)); }
 
 .chat-toggle-button:hover,
 .mic-button:hover {
@@ -658,17 +680,17 @@ body {
 
 /* 垂直音量視覺化：綠→金→橙（頂端微紅），與金色主題協調 */
 .audio-visualizer-vertical {
-  position: absolute; bottom: 110px; right: 40px;
-  width: 50px; height: 200px; display: flex; flex-direction: column-reverse; gap: 4px;
-  padding: 12px;
+  position: absolute; bottom: calc(110px * var(--ui-scale)); right: calc(40px * var(--ui-scale));
+  width: calc(50px * var(--ui-scale)); height: calc(200px * var(--ui-scale)); display: flex; flex-direction: column-reverse; gap: calc(4px * var(--ui-scale));
+  padding: calc(12px * var(--ui-scale));
   background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.18));
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: calc(12px * var(--ui-scale));
   backdrop-filter: var(--blur-mid);
   z-index: 100;
 }
 .audio-level-bar {
-  width: 100%; height: 100%; border-radius: 4px; transition: all .1s ease-out;
+  width: 100%; height: 100%; border-radius: calc(4px * var(--ui-scale)); transition: all .1s ease-out;
   background: rgba(120, 120, 120, 0.25);
   border: 1px solid rgba(255,255,255,0.12);
 }
@@ -694,14 +716,14 @@ body {
 /* ===== Logo 容器 ===== */
 .logo-container {
   position: absolute;
-  top: 40px;
-  left: 40px;
+  top: calc(40px * var(--ui-scale));
+  left: calc(40px * var(--ui-scale));
   z-index: 100;
-  width: 120px;
+  width: calc(120px * var(--ui-scale));
 }
 
 .app-logo {
-  height: 28px;
+  height: calc(28px * var(--ui-scale));
   width: 100%;
   display: block;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
@@ -716,8 +738,8 @@ body {
   z-index: 100;
 
   /* 尺寸 - 完全參考設計稿 */
-  width: 350px;
-  height: 38px;
+  width: calc(370px * var(--ui-scale));
+  height: calc(46px * var(--ui-scale));
 
   /* 玻璃態核心樣式 - 完全參考設計稿 */
   background: rgba(255, 255, 255, 0.05);
@@ -736,7 +758,7 @@ body {
 
   /* 文字樣式 */
   color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-font-scale));
   font-weight: 600;
   letter-spacing: 0.3px;
 
@@ -747,11 +769,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: calc(8px * var(--ui-scale));
 }
 
 .start-conversation-button .mic-icon {
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-font-scale));
 }
 
 .start-conversation-button .button-text {
@@ -774,14 +796,14 @@ body {
 /* ===== 結束對話按鈕（玻璃態設計） ===== */
 .end-conversation-button {
   position: absolute;
-  top: 80px;
-  left: 40px;
+  top: calc(80px * var(--ui-scale));
+  left: calc(40px * var(--ui-scale));
   z-index: 100;
 
-  /* 尺寸與排版 - 與 logo 寬度一致 */
-  width: 120px;
-  height: 38px;
-  font-size: 13px;
+  /* 尺寸與排版 - 寬度再增加 20% */
+  width: calc(173px * var(--ui-scale)); /* 144px × 1.2 = 172.8px ≈ 173px (原 120px 增加 44%) */
+  height: calc(32px * var(--ui-scale));
+  font-size: calc(13px * var(--ui-font-scale));
   font-weight: 700;
   letter-spacing: 0.3px;
 
@@ -789,7 +811,7 @@ body {
   background: rgba(255, 90, 90, 0.12);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  border-radius: 69px;
+  border-radius: calc(69px * var(--ui-scale));
   border: none;
 
   /* 多層陰影效果 */
@@ -811,11 +833,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: calc(6px * var(--ui-scale));
 }
 
 .end-conversation-button .end-icon {
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-font-scale));
   animation: endPulse 1.5s ease-in-out infinite;
 }
 
@@ -885,4 +907,160 @@ body {
   .start-conversation-button .mic-icon { animation: none; }
   .end-conversation-button { animation: none; transition: none; }
   .end-conversation-button .end-icon { animation: none; }
+}
+
+/* ========================================
+   垂直佈局 RWD 樣式 (/vertical 路由專用)
+   ======================================== */
+
+/* 垂直佈局容器 - 使用 data attribute 標記 */
+[data-layout="vertical"] {
+  --vertical-offset: calc(-80px * var(--ui-scale)); /* 整體往上偏移量 */
+  --spline-scale: 0.85; /* Spline 縮放比例 */
+  --bubble-top-offset: calc(-60px * var(--ui-scale)); /* 對話氣泡往上偏移 */
+  --logo-top: calc(30px * var(--ui-scale)); /* Logo 位置微調 */
+  --end-button-top: calc(65px * var(--ui-scale)); /* 結束對話按鈕位置微調 */
+}
+
+/* 垂直佈局：背景改為純黑色 */
+[data-layout="vertical"].app-container {
+  background: #000000;
+}
+
+/* Spline 容器整體往上移 */
+[data-layout="vertical"] .left-panel > :first-child {
+  transform: translateY(var(--vertical-offset)) scale(var(--spline-scale));
+}
+
+/* SVG 倒影也需要同步往上移，並額外往下 20px */
+[data-layout="vertical"] .glass-reflection {
+  top: calc(50% + 180px + var(--vertical-offset) + 20px) !important;
+}
+
+/* 點按喚醒按鈕往上調整 */
+[data-layout="vertical"] .start-conversation-button {
+  top: calc(50% + var(--vertical-offset));
+}
+
+/* 對話氣泡框往上移 - 使用 top 定位固定上緣 */
+[data-layout="vertical"] .message-bubble {
+  top: calc(50% + 120px + var(--bubble-top-offset) - 15px); /* 固定上緣位置，再往上 15px */
+}
+
+/* Logo 位置微調 - 往左上角移動 */
+[data-layout="vertical"] .logo-container {
+  top: calc(8px * var(--ui-scale));
+  left: calc(8px * var(--ui-scale));
+}
+
+/* 結束對話按鈕位置微調 - 往左上角移動 */
+[data-layout="vertical"] .end-conversation-button {
+  top: calc(48px * var(--ui-scale));
+  left: calc(5px * var(--ui-scale));
+}
+
+/* 手機版響應式調整 */
+@media (max-width: 768px) {
+  [data-layout="vertical"] {
+    --vertical-offset: calc(-100px * var(--ui-scale));
+    --spline-scale: 0.75;
+    --bubble-top-offset: calc(-80px * var(--ui-scale));
+  }
+}
+
+/* 平板版響應式調整 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  [data-layout="vertical"] {
+    --vertical-offset: calc(-90px * var(--ui-scale));
+    --spline-scale: 0.8;
+    --bubble-top-offset: calc(-70px * var(--ui-scale));
+  }
+}
+
+/* 垂直佈局隱藏控制按鈕 */
+[data-layout="vertical"] .controls {
+  display: none;
+}
+
+/* 垂直佈局隱藏系統狀態指示器 */
+[data-layout="vertical"] .status-indicator {
+  display: none;
+}
+
+/* 垂直佈局隱藏麥克風視覺化按鈕 */
+[data-layout="vertical"] .mic-button {
+  display: none;
+}
+
+/* 垂直佈局：音訊視覺化往右下角移動 - 與 logo 間距一致，並縮小尺寸 */
+[data-layout="vertical"] .audio-visualizer-vertical {
+  bottom: calc(3px * var(--ui-scale));
+  right: calc(3px * var(--ui-scale));
+  width: calc(20px * var(--ui-scale));
+  height: calc(240px * var(--ui-scale));
+  padding: calc(4px * var(--ui-scale));
+  gap: calc(3px * var(--ui-scale));
+}
+
+/* 垂直佈局：歷史對話紀錄按鈕移至對話氣泡右上方 */
+[data-layout="vertical"] .chat-toggle-button {
+  top: calc(50% + 120px + var(--bubble-top-offset) - 48px - 15px); /* 氣泡上緣 - 按鈕高度(38px) - 間距(10px) - 往上15px */
+  right: calc(50% - min(90%, calc(460px * var(--ui-scale))) / 2); /* 與氣泡框右緣對齊 */
+  left: auto;
+  bottom: auto;
+  padding: calc(5px * var(--ui-scale)) calc(11px * var(--ui-scale)); /* 放大 20%: 4px*1.2≈5px, 9px*1.2≈11px */
+  width: calc(50px * var(--ui-scale)); /* 放大 20%: 42px * 1.2 = 50.4px ≈ 50px */
+  height: calc(38px * var(--ui-scale)); /* 放大 20%: 32px * 1.2 = 38.4px ≈ 38px */
+  border-radius: calc(18px * var(--ui-scale)); /* 放大 20%: 15px * 1.2 = 18px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 圖示也放大 20% */
+[data-layout="vertical"] .chat-toggle-button svg {
+  width: calc(29px * var(--ui-scale)); /* 放大 20%: 24px * 1.2 = 28.8px ≈ 29px */
+  height: calc(29px * var(--ui-scale));
+  flex-shrink: 0;
+}
+
+/* 垂直佈局：對話歷史區塊全螢幕覆蓋 */
+[data-layout="vertical"] .right-panel {
+  position: fixed;
+  top: calc(110px * var(--ui-scale)); /* 留出空間讓 X 按鈕在區塊外 (55px + 38px + 10px間距 + 32px按鈕高度 + -5px重疊) */
+  left: calc(25px * var(--ui-scale)); /* 與結束對話按鈕左緣對齊 */
+  right: calc(20px * var(--ui-scale)); /* 右側留邊距 */
+  bottom: calc(20px * var(--ui-scale)); /* 底部也留邊距 */
+  z-index: 200; /* 高於其他元素 */
+  background: rgba(0, 0, 0, 0.25); /* 半透明黑色背景 */
+  border-radius: calc(24px * var(--ui-scale));
+  margin: 0;
+  padding: calc(10px * var(--ui-scale)); /* 調整 padding，因為 X 按鈕在外面 */
+}
+
+/* 垂直佈局：調整 grid 佈局 - 對話歷史展開時不影響主體 */
+[data-layout="vertical"].app-container:has(.right-panel) {
+  grid-template-columns: 1fr; /* 保持單欄 */
+}
+
+/* 垂直佈局：關閉對話按鈕移至對話區塊外的右上角 */
+[data-layout="vertical"] .right-panel .chat-header {
+  position: absolute;
+  top: calc(-46px * var(--ui-scale)); /* 區塊上方，按鈕高度 38px + 10px 間距 */
+  right: 0; /* 與區塊右緣對齊 */
+  left: auto;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  z-index: 201; /* 高於對話區塊 */
+}
+
+/* 垂直佈局：隱藏標題文字，只保留關閉按鈕 */
+[data-layout="vertical"] .chat-header h2 {
+  display: none;
+}
+
+/* 垂直佈局：隱藏輸入訊息區域（目前用不到） */
+[data-layout="vertical"] .chat-input-area {
+  display: none;
 }

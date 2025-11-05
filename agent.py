@@ -23,6 +23,7 @@ from tools import (
     qa_list_tags,
 )
 from log_config import setup_logging
+from conversation_logger import get_conversation_logger
 
 load_dotenv()
 
@@ -98,6 +99,12 @@ async def entrypoint(ctx: agents.JobContext):
     await ctx.connect()
     agent_logger.info("✅ Connected to room")
 
+    # 初始化對話日誌記錄器
+    conv_logger = get_conversation_logger()
+    room_name = ctx.room.name
+    log_file = conv_logger.start_conversation(room_name)
+    agent_logger.info(f"📝 Conversation log started: {log_file}")
+
     # 創建 AgentSession（需要提前創建以便在回調中使用）
     session = AgentSession()
 
@@ -129,6 +136,9 @@ async def entrypoint(ctx: agents.JobContext):
         agent_logger.info(f"💬 [TEXT_MESSAGE] Participant SID: {participant.sid}")
         agent_logger.info(f"💬 [TEXT_MESSAGE] Text length: {len(user_text)}")
         agent_logger.info("=" * 80)
+
+        # 記錄到對話日誌
+        conv_logger.log_user_message(user_text, participant.identity)
 
         # 發送文字訊息到前端（顯示用戶輸入）
         try:
@@ -167,6 +177,9 @@ async def entrypoint(ctx: agents.JobContext):
         agent_logger.info(f"   - Type: {type(participant).__name__}")
         agent_logger.info(f"   - Metadata: {participant.metadata}")
 
+        # 記錄到對話日誌
+        conv_logger.log_system_event(f"User connected: {participant.identity}")
+
         # RemoteParticipant is always remote (not local)
         if not participant_greeted:
             agent_logger.info(f"✅ User joined: {participant.identity}")
@@ -177,6 +190,11 @@ async def entrypoint(ctx: agents.JobContext):
     def on_participant_disconnected(participant):
         agent_logger.info(f"👤 Participant disconnected: {participant.identity}")
         agent_logger.info(f"   - Type: {type(participant).__name__}")
+
+        # 結束對話日誌
+        conv_logger.log_system_event(f"User disconnected: {participant.identity}")
+        conv_logger.end_conversation()
+        agent_logger.info("📝 Conversation log ended")
 
     ctx.room.on("participant_connected", on_participant_connected)
     ctx.room.on("participant_disconnected", on_participant_disconnected)
@@ -201,6 +219,9 @@ async def entrypoint(ctx: agents.JobContext):
 
         # ✅ 發送 ASR 文字到前端（只發送 final 結果）
         if event.is_final and event.transcript.strip():
+            # 記錄到對話日誌
+            conv_logger.log_user_message(event.transcript, "voice")
+
             try:
                 asyncio.create_task(
                     ctx.room.local_participant.publish_data(
@@ -305,6 +326,10 @@ async def entrypoint(ctx: agents.JobContext):
                 content = event.item.content if hasattr(event.item, 'content') else ''
                 text = ' '.join(content) if isinstance(content, list) else content
                 agent_logger.info(f"[Agent] Response complete: {text[:100]}...")
+
+                # 記錄到對話日誌
+                if text:
+                    conv_logger.log_agent_message(text)
 
     session.on("conversation_item_added", on_conversation_item)
 

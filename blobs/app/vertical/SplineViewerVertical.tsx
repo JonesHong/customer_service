@@ -1,42 +1,39 @@
 /**
- * SplineViewer Component - 水平佈局版本 (Horizontal Layout Version)
+ * SplineViewerVertical Component - 垂直佈局版本 (Vertical Layout Version)
  *
- * 當前配置特點：
- * - 「點 按 喚 醒」按鈕：中央置中（top: 50%, left: 50%, transform: translate(-50%, -50%)）
- * - Logo：左上角（top: 40px, left: 40px, width: 120px）
- * - 結束對話按鈕：Logo 下方（top: 80px, left: 40px, width: 120px）
- * - 對話切換按鈕：右上角，使用 SVG 圖標切換顯示/隱藏（top: 40px, right: 40px）
- * - 麥克風按鈕：右下角（bottom: 40px, right: 40px）
+ * 當前配置特點（RWD 響應式設計）：
+ * - Spline 球體與倒影：整體往上移動
+ * - 「點 按 喚 醒」按鈕：中央置中並往上調整
+ * - 對話氣泡框：往上移動
+ * - Logo：左上角位置微調
+ * - 結束對話按鈕：Logo 下方位置微調
+ * - 對話切換按鈕：右上角保持（top: 40px, right: 40px）
+ * - 麥克風按鈕：右下角保持（bottom: 40px, right: 40px）
  * - SVG 反射陰影：銀白色漸層（240,245,250 → 220,230,240 → 200,215,230）
  * - 按鈕樣式：玻璃擬態設計（padding: 6px 16px, border-radius: 69px）
  *
- * 可通過 /horizontal 路由訪問此佈局
+ * 可通過 /vertical 路由訪問此佈局
  */
 
 "use client";
 
 import { useRef, useState, useEffect } from "react";
 import type { Application } from "@splinetool/runtime";
-import { useLiveKit } from "./hooks/useLiveKit";
+import { useLiveKit } from "../hooks/useLiveKit";
 
 // 匯入純 TypeScript 模組
-import { AnimationManager } from "./utils/animations";
+import { AnimationManager } from "../utils/animations";
 import {
   AudioAnalyzer,
   createMicrophoneStream,
   stopMediaStream,
-} from "./utils/audioAnalyzer";
-import { ChatManager, createAIMessage } from "./utils/chatManager";
-import { MessageScheduler } from "./utils/messageScheduler";
-import { createConnectionConfig } from "./utils/livekitClient";
+} from "../utils/audioAnalyzer";
+import { ChatManager, createAIMessage } from "../utils/chatManager";
+import { MessageScheduler } from "../utils/messageScheduler";
+import { createConnectionConfig } from "../utils/livekitClient";
 
 // 匯入類型
-import type { AnimationState, ChatMessage } from "./types/spline.types";
-
-const BASE_WIDTH = 1280;
-const BASE_HEIGHT = 720;
-const MIN_SCALE = 0.6;
-const MAX_SCALE = 1.8;
+import type { AnimationState, ChatMessage } from "../types/spline.types";
 
 const INITIAL_BUBBLE_MESSAGE = "HELLO 你可以直接說話問我";
 const QUICK_PROMPTS = [
@@ -45,7 +42,7 @@ const QUICK_PROMPTS = [
   "過站要怎麼補票？",
 ];
 
-export default function SplineViewer() {
+export default function SplineViewerVertical() {
   // Spline 相關
   const [SplineComponent, setSplineComponent] = useState<any>(null);
   const [state, setState] = useState<AnimationState>("idle");
@@ -66,19 +63,20 @@ export default function SplineViewer() {
   );
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>("");
-  const [showChat, setShowChat] = useState<boolean>(false); // 🔧 改為 false，初始狀態不顯示歷史對話
+  const [showChat, setShowChat] = useState<boolean>(false); // 垂直模式預設關閉對話記錄
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
   const [rotatingPromptIndex, setRotatingPromptIndex] = useState<number>(0);
   const [showGreetingButtons, setShowGreetingButtons] = useState<boolean>(false);
   const [hasReceivedFirstAgentMessage, setHasReceivedFirstAgentMessage] = useState<boolean>(false);
-  const [uiScale, setUiScale] = useState<number>(1);
+  const [showAudioVisualizer, setShowAudioVisualizer] = useState<boolean>(true); // 垂直模式預設顯示視覺化
 
   // Refs
   const messageBubbleRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
+  const visualizerMicStreamRef = useRef<MediaStream | null>(null); // 專門用於視覺化的麥克風串流
 
   // LiveKit 整合
   const {
@@ -105,38 +103,6 @@ export default function SplineViewer() {
     });
   }, []);
 
-  // 根據視窗大小更新 UI 縮放
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const updateScaleVariables = () => {
-      const widthScale = window.innerWidth / BASE_WIDTH;
-      const heightScale = window.innerHeight / BASE_HEIGHT;
-      const nextScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, Math.min(widthScale, heightScale))
-      );
-      const fontScale = Math.max(0.85, Math.min(nextScale, 1.6));
-
-      setUiScale(nextScale);
-      document.documentElement.style.setProperty("--ui-scale", `${nextScale}`);
-      document.documentElement.style.setProperty(
-        "--ui-font-scale",
-        `${fontScale}`
-      );
-    };
-
-    updateScaleVariables();
-    window.addEventListener("resize", updateScaleVariables);
-
-    return () => {
-      window.removeEventListener("resize", updateScaleVariables);
-      document.documentElement.style.setProperty("--ui-scale", "1");
-      document.documentElement.style.setProperty("--ui-font-scale", "1");
-    };
-  }, []);
   // 移除輪播功能（現在使用固定標題）
   // useEffect(() => {
   //   if (!isConnected && isDefaultBubble) {
@@ -166,8 +132,56 @@ export default function SplineViewer() {
       animationManagerRef.current?.dispose();
       scaleMonitorCleanupRef.current?.(); // 清理縮放監聽
       stopMediaStream(micStreamRef.current);
+      stopMediaStream(visualizerMicStreamRef.current); // 清理視覺化麥克風
     };
   }, []);
+
+  // 獨立的麥克風視覺化監聽（不依賴 LiveKit）
+  useEffect(() => {
+    if (!showAudioVisualizer) {
+      // 如果關閉視覺化，停止麥克風監聽
+      if (visualizerMicStreamRef.current) {
+        stopMediaStream(visualizerMicStreamRef.current);
+        visualizerMicStreamRef.current = null;
+      }
+      if (audioAnalyzerRef.current) {
+        audioAnalyzerRef.current.stopAnalyzing();
+      }
+      setAudioLevel(0);
+      return;
+    }
+
+    // 啟動麥克風監聽
+    async function startVisualizerMicrophone() {
+      try {
+        const stream = await createMicrophoneStream();
+        visualizerMicStreamRef.current = stream;
+
+        // 初始化音訊分析器
+        if (audioAnalyzerRef.current) {
+          await audioAnalyzerRef.current.initialize(stream);
+          audioAnalyzerRef.current.startAnalyzing((level) => {
+            setAudioLevel(level);
+          });
+        }
+      } catch (error) {
+        console.error("無法啟動視覺化麥克風:", error);
+      }
+    }
+
+    startVisualizerMicrophone();
+
+    // 清理函數
+    return () => {
+      if (visualizerMicStreamRef.current) {
+        stopMediaStream(visualizerMicStreamRef.current);
+        visualizerMicStreamRef.current = null;
+      }
+      if (audioAnalyzerRef.current) {
+        audioAnalyzerRef.current.stopAnalyzing();
+      }
+    };
+  }, [showAudioVisualizer]);
 
   // Spline 載入完成
   function onLoad(spline: Application) {
@@ -539,7 +553,7 @@ export default function SplineViewer() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-layout="vertical">
       {/* 左側：Spline 動畫區 */}
       <div className="left-panel">
         {/* Spline 容器 */}
@@ -553,11 +567,7 @@ export default function SplineViewer() {
         >
           {/* Spline 球體 */}
           <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              transform: `scale(${0.78 * uiScale})`,
-            }}
+            style={{ position: "absolute", inset: 0, transform: "scale(0.78)" }}
           >
             <SplineComponent
               scene="https://prod.spline.design/yrSXHRa01Eg4mSWv/scene.splinecode"
@@ -570,12 +580,12 @@ export default function SplineViewer() {
             className="glass-reflection"
             style={{
               position: "absolute",
-              // 陰影固定在地面位置，與球體保持 180px 間隔
-              top: `calc(50% + ${180 * uiScale}px)`,
+              // 陰影固定在地面位置，與球體保持 180px 間隔，垂直佈局額外往下 20px
+              top: "calc(50% + 260px)",
               left: "50%",
               // 固定基礎尺寸（放大三倍）
-              width: `${468 * 0.8 * 3 * uiScale}px`,
-              height: `${380 * 0.8 * 3 * uiScale}px`,
+              width: `${468 * 0.8 * 3}px`,
+              height: `${380 * 0.8 * 3}px`,
               pointerEvents: "none",
               // Transform-origin 設定為底部中心，讓縮放從底部錨點進行
               transformOrigin: "50% 100%",
@@ -752,6 +762,10 @@ export default function SplineViewer() {
               setHasReceivedFirstAgentMessage(false);
               console.log("✅ 已重置 hasReceivedFirstAgentMessage");
 
+              // 隱藏歡迎按鈕
+              setShowGreetingButtons(false);
+              console.log("✅ 已隱藏歡迎按鈕");
+
               // 斷開連接
               await disconnect();
               console.log("✅ 已斷開連接");
@@ -786,39 +800,41 @@ export default function SplineViewer() {
           </div>
         )}
 
-        {/* 聊天開關按鈕 */}
-        <button
-          className="chat-toggle-button"
-          onClick={() => setShowChat(!showChat)}
-          title={showChat ? "隱藏對話記錄" : "顯示對話記錄"}
-        >
-          {showChat ? (
-            // 隱藏對話 - X 圖標
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ) : (
-            // 顯示對話 - 對話泡泡圖標
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.2002 5V4V5ZM18.3623 5.32715L18.8164 4.4362L18.8163 4.43614L18.3623 5.32715ZM19.6729 6.6377L20.5639 6.1837L20.5638 6.18359L19.6729 6.6377ZM20 9.7998H21H20ZM20 12.2002H21H20ZM19.6729 15.3623L20.5638 15.8164L20.5639 15.8163L19.6729 15.3623ZM18.3623 16.6729L18.8163 17.5639L18.8164 17.5638L18.3623 16.6729ZM15.2002 17V18V17ZM4.76855 20.2314L4.06145 19.5243H4.06145L4.76855 20.2314ZM4 19.9141H3L3 19.915L4 19.9141ZM4 9.7998H3H4ZM4.32715 6.6377L3.4362 6.18359L3.43614 6.1837L4.32715 6.6377ZM5.6377 5.32715L5.1837 4.43614L5.18359 4.4362L5.6377 5.32715ZM8.7998 5V4V5ZM7.70711 17.2929L7 16.5858L7.70711 17.2929ZM15.2002 5V6C16.0566 6 16.639 6.00082 17.0891 6.03763C17.5276 6.07349 17.7519 6.13845 17.9083 6.21815L18.3623 5.32715L18.8163 4.43614C18.331 4.18887 17.8143 4.09026 17.2521 4.04429C16.7016 3.99927 16.0238 4 15.2002 4V5ZM18.3623 5.32715L17.9082 6.2181C18.2844 6.40981 18.5902 6.71565 18.7819 7.0918L19.6729 6.6377L20.5638 6.18359C20.1804 5.4313 19.5687 4.81963 18.8164 4.4362L18.3623 5.32715ZM19.6729 6.6377L18.7818 7.09169C18.8615 7.24811 18.9265 7.47241 18.9624 7.91089C18.9992 8.361 19 8.94335 19 9.7998H20H21C21 8.97623 21.0007 8.29838 20.9557 7.74787C20.9097 7.18573 20.8111 6.66899 20.5639 6.1837L19.6729 6.6377ZM20 9.7998H19V12.2002H20H21V9.7998H20ZM20 12.2002H19C19 13.0566 18.9992 13.639 18.9624 14.0891C18.9265 14.5276 18.8615 14.7519 18.7818 14.9083L19.6729 15.3623L20.5639 15.8163C20.8111 15.331 20.9097 14.8143 20.9557 14.2521C21.0007 13.7016 21 13.0238 21 12.2002H20ZM19.6729 15.3623L18.7819 14.9082C18.5902 15.2844 18.2844 15.5902 17.9082 15.7819L18.3623 16.6729L18.8164 17.5638C19.5687 17.1804 20.1804 16.5687 20.5638 15.8164L19.6729 15.3623ZM18.3623 16.6729L17.9083 15.7818C17.7519 15.8615 17.5276 15.9265 17.0891 15.9624C16.639 15.9992 16.0566 16 15.2002 16V17V18C16.0238 18 16.7016 18.0007 17.2521 17.9557C17.8143 17.9097 18.331 17.8111 18.8163 17.5639L18.3623 16.6729ZM15.2002 17V16H8.41421V17V18H15.2002V17ZM7.70711 17.2929L7 16.5858L4.06145 19.5243L4.76855 20.2314L5.47566 20.9386L8.41421 18L7.70711 17.2929ZM4.76855 20.2314L4.06145 19.5243C4.40614 19.1796 4.99955 19.421 5 19.9131L4 19.9141L3 19.915C3.00119 21.2083 4.56422 21.85 5.47566 20.9386L4.76855 20.2314ZM4 19.9141H5V9.7998H4H3V19.9141H4ZM4 9.7998H5C5 8.94335 5.00082 8.361 5.03763 7.91089C5.07349 7.47241 5.13845 7.24811 5.21815 7.09169L4.32715 6.6377L3.43614 6.1837C3.18887 6.66899 3.09026 7.18573 3.04429 7.74787C2.99927 8.29838 3 8.97623 3 9.7998H4ZM4.32715 6.6377L5.2181 7.0918C5.40981 6.71565 5.71565 6.40981 6.0918 6.2181L5.6377 5.32715L5.18359 4.4362C4.4313 4.81963 3.81963 5.4313 3.4362 6.18359L4.32715 6.6377ZM5.6377 5.32715L6.09169 6.21815C6.24811 6.13845 6.47241 6.07349 6.91089 6.03763C7.361 6.00082 7.94335 6 8.7998 6V5V4C7.97623 4 7.29838 3.99927 6.74787 4.04429C6.18573 4.09026 5.66899 4.18887 5.1837 4.43614L5.6377 5.32715ZM8.7998 5V6H15.2002V5V4H8.7998V5ZM8.41421 17V16C7.88378 16 7.37507 16.2107 7 16.5858L7.70711 17.2929L8.41421 18V17Z" fill="white"/>
-              <path d="M8 9L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M8 13L13 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
+        {/* 聊天開關按鈕 - 僅在已連接（喚醒後）時顯示 */}
+        {isConnected && (
+          <button
+            className="chat-toggle-button"
+            onClick={() => setShowChat(!showChat)}
+            title={showChat ? "隱藏對話記錄" : "顯示對話記錄"}
+          >
+            {showChat ? (
+              // 隱藏對話 - X 圖標
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              // 顯示對話 - 對話泡泡圖標
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.2002 5V4V5ZM18.3623 5.32715L18.8164 4.4362L18.8163 4.43614L18.3623 5.32715ZM19.6729 6.6377L20.5639 6.1837L20.5638 6.18359L19.6729 6.6377ZM20 9.7998H21H20ZM20 12.2002H21H20ZM19.6729 15.3623L20.5638 15.8164L20.5639 15.8163L19.6729 15.3623ZM18.3623 16.6729L18.8163 17.5639L18.8164 17.5638L18.3623 16.6729ZM15.2002 17V18V17ZM4.76855 20.2314L4.06145 19.5243H4.06145L4.76855 20.2314ZM4 19.9141H3L3 19.915L4 19.9141ZM4 9.7998H3H4ZM4.32715 6.6377L3.4362 6.18359L3.43614 6.1837L4.32715 6.6377ZM5.6377 5.32715L5.1837 4.43614L5.18359 4.4362L5.6377 5.32715ZM8.7998 5V4V5ZM7.70711 17.2929L7 16.5858L7.70711 17.2929ZM15.2002 5V6C16.0566 6 16.639 6.00082 17.0891 6.03763C17.5276 6.07349 17.7519 6.13845 17.9083 6.21815L18.3623 5.32715L18.8163 4.43614C18.331 4.18887 17.8143 4.09026 17.2521 4.04429C16.7016 3.99927 16.0238 4 15.2002 4V5ZM18.3623 5.32715L17.9082 6.2181C18.2844 6.40981 18.5902 6.71565 18.7819 7.0918L19.6729 6.6377L20.5638 6.18359C20.1804 5.4313 19.5687 4.81963 18.8164 4.4362L18.3623 5.32715ZM19.6729 6.6377L18.7818 7.09169C18.8615 7.24811 18.9265 7.47241 18.9624 7.91089C18.9992 8.361 19 8.94335 19 9.7998H20H21C21 8.97623 21.0007 8.29838 20.9557 7.74787C20.9097 7.18573 20.8111 6.66899 20.5639 6.1837L19.6729 6.6377ZM20 9.7998H19V12.2002H20H21V9.7998H20ZM20 12.2002H19C19 13.0566 18.9992 13.639 18.9624 14.0891C18.9265 14.5276 18.8615 14.7519 18.7818 14.9083L19.6729 15.3623L20.5639 15.8163C20.8111 15.331 20.9097 14.8143 20.9557 14.2521C21.0007 13.7016 21 13.0238 21 12.2002H20ZM19.6729 15.3623L18.7819 14.9082C18.5902 15.2844 18.2844 15.5902 17.9082 15.7819L18.3623 16.6729L18.8164 17.5638C19.5687 17.1804 20.1804 16.5687 20.5638 15.8164L19.6729 15.3623ZM18.3623 16.6729L17.9083 15.7818C17.7519 15.8615 17.5276 15.9265 17.0891 15.9624C16.639 15.9992 16.0566 16 15.2002 16V17V18C16.0238 18 16.7016 18.0007 17.2521 17.9557C17.8143 17.9097 18.331 17.8111 18.8163 17.5639L18.3623 16.6729ZM15.2002 17V16H8.41421V17V18H15.2002V17ZM7.70711 17.2929L7 16.5858L4.06145 19.5243L4.76855 20.2314L5.47566 20.9386L8.41421 18L7.70711 17.2929ZM4.76855 20.2314L4.06145 19.5243C4.40614 19.1796 4.99955 19.421 5 19.9131L4 19.9141L3 19.915C3.00119 21.2083 4.56422 21.85 5.47566 20.9386L4.76855 20.2314ZM4 19.9141H5V9.7998H4H3V19.9141H4ZM4 9.7998H5C5 8.94335 5.00082 8.361 5.03763 7.91089C5.07349 7.47241 5.13845 7.24811 5.21815 7.09169L4.32715 6.6377L3.43614 6.1837C3.18887 6.66899 3.09026 7.18573 3.04429 7.74787C2.99927 8.29838 3 8.97623 3 9.7998H4ZM4.32715 6.6377L5.2181 7.0918C5.40981 6.71565 5.71565 6.40981 6.0918 6.2181L5.6377 5.32715L5.18359 4.4362C4.4313 4.81963 3.81963 5.4313 3.4362 6.18359L4.32715 6.6377ZM5.6377 5.32715L6.09169 6.21815C6.24811 6.13845 6.47241 6.07349 6.91089 6.03763C7.361 6.00082 7.94335 6 8.7998 6V5V4C7.97623 4 7.29838 3.99927 6.74787 4.04429C6.18573 4.09026 5.66899 4.18887 5.1837 4.43614L5.6377 5.32715ZM8.7998 5V6H15.2002V5V4H8.7998V5ZM8.41421 17V16C7.88378 16 7.37507 16.2107 7 16.5858L7.70711 17.2929L8.41421 18V17Z" fill="white"/>
+                <path d="M8 9L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 13L13 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
+        )}
 
         {/* 麥克風按鈕 */}
         <button
-          className={`mic-button ${isRecording ? "recording" : ""}`}
-          onClick={toggleRecording}
-          title={isRecording ? "隱藏麥克風視覺化" : "顯示麥克風視覺化"}
+          className={`mic-button ${showAudioVisualizer ? "recording" : ""}`}
+          onClick={() => setShowAudioVisualizer(!showAudioVisualizer)}
+          title={showAudioVisualizer ? "隱藏麥克風視覺化" : "顯示麥克風視覺化"}
         >
-          {isRecording ? "🎤 隱藏視覺化" : "🎤 顯示視覺化"}
+          {showAudioVisualizer ? "🎤 隱藏視覺化" : "🎤 顯示視覺化"}
         </button>
 
-        {/* 音訊視覺化 */}
-        {isRecording && (
+        {/* 音訊視覺化 - 喚醒後才顯示 */}
+        {showAudioVisualizer && isConnected && (
           <div className="audio-visualizer-vertical">
             {[...Array(10)].map((_, index) => {
               const threshold = index / 10;
@@ -887,10 +903,7 @@ export default function SplineViewer() {
                     {currentMessage}
                     {/* 如果是打招呼訊息，顯示快速問題按鈕 */}
                     {showGreetingButtons && (
-                      <div
-                        className="message-bubble__buttons"
-                        style={{ marginTop: `${16 * uiScale}px` }}
-                      >
+                      <div className="message-bubble__buttons" style={{ marginTop: "16px" }}>
                         {QUICK_PROMPTS.map((prompt) => (
                           <button
                             key={prompt}
@@ -916,6 +929,40 @@ export default function SplineViewer() {
         <div className="right-panel glass-panel">
           <div className="chat-header">
             <h2>對話記錄</h2>
+            {/* 關閉按鈕 - 垂直佈局會移至右上角 */}
+            <button
+              onClick={() => setShowChat(false)}
+              className="chat-close-button"
+              style={{
+                width: "50px", // 放大 20%: 42px * 1.2 = 50px
+                height: "38px", // 放大 20%: 32px * 1.2 = 38px
+                borderRadius: "18px", // 放大 20%: 15px * 1.2 = 18px
+                border: "none",
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(25px)",
+                WebkitBackdropFilter: "blur(25px)",
+                boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 0px 2px rgba(0, 0, 0, 0.25), inset 0px 1px 1px rgba(255, 255, 255, 0.5), inset 0px 0px 15px rgba(255, 255, 255, 0.2), inset 0px 15px 30px rgba(255, 255, 255, 0.2)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                padding: "5px 11px", // 放大 20%: 4px*1.2≈5px, 9px*1.2≈11px
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.filter = "brightness(1.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.filter = "brightness(1)";
+              }}
+            >
+              <svg width="29" height="29" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
 
           <div className="chat-messages">
