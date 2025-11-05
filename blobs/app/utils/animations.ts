@@ -146,7 +146,7 @@ export function createReplyAnimation(
     start: () => {
       if (timerId) return;
 
-      console.log('🎯 回覆狀態：上下跳動');
+      console.log('🎯 [Animation] Agent replying - bounce animation started');
 
       time = 0;
       timerId = setInterval(() => {

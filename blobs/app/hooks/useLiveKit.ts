@@ -197,16 +197,24 @@ export function useLiveKit() {
             const target = event.target as HTMLAudioElement;
             const error = target.error;
 
-            // 只記錄真正有錯誤代碼和訊息的情況
+            // ✅ 過濾掉預期的錯誤：
+            // - code 4 (MEDIA_ERR_SRC_NOT_SUPPORTED) + "Empty src" 是正常的初始化狀態
+            // - 因為我們使用 srcObject 而非 src 屬性
             if (error && error.code && error.message) {
-              console.error('❌ Audio playback error:', {
-                code: error.code,
-                message: error.message,
-                type: error.code === 1 ? 'MEDIA_ERR_ABORTED' :
-                      error.code === 2 ? 'MEDIA_ERR_NETWORK' :
-                      error.code === 3 ? 'MEDIA_ERR_DECODE' :
-                      error.code === 4 ? 'MEDIA_ERR_SRC_NOT_SUPPORTED' : 'UNKNOWN',
-              });
+              const isExpectedEmptySrcError =
+                error.code === 4 &&
+                error.message.includes('Empty src');
+
+              if (!isExpectedEmptySrcError) {
+                console.error('❌ Audio playback error:', {
+                  code: error.code,
+                  message: error.message,
+                  type: error.code === 1 ? 'MEDIA_ERR_ABORTED' :
+                        error.code === 2 ? 'MEDIA_ERR_NETWORK' :
+                        error.code === 3 ? 'MEDIA_ERR_DECODE' :
+                        error.code === 4 ? 'MEDIA_ERR_SRC_NOT_SUPPORTED' : 'UNKNOWN',
+                });
+              }
             }
           });
         }

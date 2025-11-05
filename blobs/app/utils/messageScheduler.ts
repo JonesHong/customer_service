@@ -109,7 +109,7 @@ export class MessageScheduler {
     }
     this.isRunning = false;
     this.lastIndex = -1;
-    console.log('🛑 MessageScheduler stopped');
+    console.log('🛑 [MessageScheduler] Stopped and reset');
   }
 
   /**

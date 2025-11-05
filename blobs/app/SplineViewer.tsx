@@ -33,13 +33,11 @@ import { createConnectionConfig } from "./utils/livekitClient";
 // 匯入類型
 import type { AnimationState, ChatMessage } from "./types/spline.types";
 
-const INITIAL_BUBBLE_MESSAGE =
-  "HELLO 你可以直接說話問我 OR 按下按鈕開始對話";
+const INITIAL_BUBBLE_MESSAGE = "HELLO 你可以直接說話問我";
 const QUICK_PROMPTS = [
-  "HELLO 你可以直接說話問我",
   "想知道廁所在哪？",
   "附近有什麼好吃的餐廳？",
-  "過站要怎麼補票？？",
+  "過站要怎麼補票？",
 ];
 
 export default function SplineViewer() {
@@ -68,6 +66,8 @@ export default function SplineViewer() {
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
   const [rotatingPromptIndex, setRotatingPromptIndex] = useState<number>(0);
+  const [showGreetingButtons, setShowGreetingButtons] = useState<boolean>(false);
+  const [hasReceivedFirstAgentMessage, setHasReceivedFirstAgentMessage] = useState<boolean>(false);
 
   // Refs
   const messageBubbleRef = useRef<HTMLDivElement>(null);
@@ -99,16 +99,15 @@ export default function SplineViewer() {
     });
   }, []);
 
-  // 輪播提示文字
-  useEffect(() => {
-    if (!isConnected && isDefaultBubble) {
-      const interval = setInterval(() => {
-        setRotatingPromptIndex((prev) => (prev + 1) % QUICK_PROMPTS.length);
-      }, 3000); // 每 3 秒切換一次
-
-      return () => clearInterval(interval);
-    }
-  }, [isConnected, isDefaultBubble]);
+  // 移除輪播功能（現在使用固定標題）
+  // useEffect(() => {
+  //   if (!isConnected && isDefaultBubble) {
+  //     const interval = setInterval(() => {
+  //       setRotatingPromptIndex((prev) => (prev + 1) % QUICK_PROMPTS.length);
+  //     }, 3000);
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [isConnected, isDefaultBubble]);
 
   // 初始化管理器
   useEffect(() => {
@@ -227,7 +226,7 @@ export default function SplineViewer() {
           }
 
           // 計算 Y 軸偏移量（跳動高度）
-          const yOffset = sphere.position.y - initialSphereY;
+          const yOffset = initialSphereY !== null ? sphere.position.y - initialSphereY : 0;
           setSphereYOffset(yOffset);
 
           // 追蹤球體縮放比例（脈動大小）
@@ -269,6 +268,27 @@ export default function SplineViewer() {
       // 顯示 Agent 訊息
       if (lastTranscription.role === "assistant") {
         setCurrentMessage(lastTranscription.text);
+
+        // 檢查是否為第一次收到 agent 訊息（打招呼訊息）
+        if (!hasReceivedFirstAgentMessage && lastTranscription.isFinal) {
+          const isGreeting = (
+            lastTranscription.text.includes("您好") ||
+            lastTranscription.text.includes("你好") ||
+            lastTranscription.text.includes("我是") ||
+            lastTranscription.text.includes("請問") ||
+            lastTranscription.text.includes("需要什麼") ||
+            lastTranscription.text.includes("協助")
+          );
+
+          if (isGreeting) {
+            setShowGreetingButtons(true);
+            setHasReceivedFirstAgentMessage(true);
+          }
+        } else if (hasReceivedFirstAgentMessage && showGreetingButtons) {
+          // 如果已經顯示過打招呼按鈕，且 agent 開始說下一句話，則隱藏按鈕
+          setShowGreetingButtons(false);
+        }
+
         messageBubbleRef.current?.scrollTo({
           top: messageBubbleRef.current.scrollHeight,
           behavior: "smooth",
@@ -344,6 +364,10 @@ export default function SplineViewer() {
   // 開始對話
   async function handleStartConversation() {
     try {
+      // 重置狀態
+      setHasReceivedFirstAgentMessage(false);
+      setShowGreetingButtons(false);
+
       const config = await createConnectionConfig();
       await connect({ url: config.url, token: config.token });
 
@@ -765,11 +789,10 @@ export default function SplineViewer() {
                 {isDefaultBubble ? (
                   <div className="message-bubble__default">
                     <p className="message-bubble__headline">
-                      {QUICK_PROMPTS[rotatingPromptIndex]}
+                      {INITIAL_BUBBLE_MESSAGE}
                     </p>
-                    <p className="message-bubble__divider">OR</p>
                     <div className="message-bubble__buttons">
-                      {QUICK_PROMPTS.slice(1).map((prompt) => (
+                      {QUICK_PROMPTS.map((prompt) => (
                         <button
                           key={prompt}
                           type="button"
@@ -782,7 +805,24 @@ export default function SplineViewer() {
                     </div>
                   </div>
                 ) : (
-                  currentMessage
+                  <div>
+                    {currentMessage}
+                    {/* 如果是打招呼訊息，顯示快速問題按鈕 */}
+                    {showGreetingButtons && (
+                      <div className="message-bubble__buttons" style={{ marginTop: "16px" }}>
+                        {QUICK_PROMPTS.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            className="message-bubble__button"
+                            onClick={() => handleQuickPrompt(prompt)}
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

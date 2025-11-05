@@ -43,12 +43,13 @@ class Assistant(Agent):
                 voice="marin",  # 預設為 marin, 另提供以下選擇 alloy, ash, ballad, coral, echo, sage, shimmer, verse, cedar
                 temperature=0.8,
                 speed=1.2,
-                turn_detection=TurnDetection(  # ✅ 啟用伺服器端語音檢測
+                turn_detection=TurnDetection(  # ✅ 恢復舊版本配置（已驗證可運作）
                     type="server_vad",
                     threshold=0.3,  # ✅ 降低閾值使其更容易觸發（從 0.5 → 0.3）
                     prefix_padding_ms=300,
-                    silence_duration_ms=500,
+                    silence_duration_ms=500,  # ✅ 恢復為 500ms（從 700ms → 500ms）
                 ),
+                # ❌ 移除 input_audio_noise_reduction（舊版本沒有此參數）
             ),
             tools=[
                 get_weather,
